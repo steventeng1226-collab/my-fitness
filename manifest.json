@@ -1,6 +1,6 @@
 {
-  "name": "My Fitness",
-  "short_name": "My Fitness",
+  "name": "我的健身 My Fitness",
+  "short_name": "我的健身",
   "description": "每天運動一點，找回健康人生",
   "start_url": "./",
   "scope": "./",
