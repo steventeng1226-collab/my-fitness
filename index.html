@@ -11,56 +11,61 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:18px;line-height:1.5;color:#111;background:#F2F4F3;padding-bottom:84px}
-header{position:sticky;top:0;z-index:5;background:#0F6E56;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-header h1{font-size:20px;margin:0;font-weight:700}
-header .sub{font-size:14px;opacity:.95}
+body{font-family:-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:16px;line-height:1.45;color:#111;background:#F2F4F3;padding-bottom:74px}
+header{position:sticky;top:0;z-index:5;background:#0F6E56;color:#fff;padding:8px 14px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:18px;margin:0;font-weight:700}
+header .sub{font-size:13px;opacity:.95}
 .gear{background:none;border:none;color:#fff;font-size:26px;padding:4px 8px}
-main{padding:12px;max-width:720px;margin:0 auto}
-.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #D5DBD8}
-.card h2{font-size:19px;margin:0 0 10px}
-.banner{border-radius:14px;padding:14px;margin-bottom:12px;font-size:19px;font-weight:700}
+main{padding:8px;max-width:720px;margin:0 auto}
+.card{background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:8px;border:1px solid #D5DBD8}
+.card h2{font-size:17px;margin:0 0 6px}
+.banner{border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:17px;font-weight:700}
 .b-ok{background:#0F6E56;color:#fff}
 .b-todo{background:#FFF4DC;color:#5A3A00;border:2px solid #EF9F27}
 .b-warn{background:#FDE3E3;color:#7A1414;border:2px solid #D33}
-.small{font-size:15px;color:#333}
-.muted{font-size:15px;color:#444}
+.small{font-size:14px;color:#333}
+.muted{font-size:14px;color:#333}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip,.btn{border:2px solid #0F6E56;background:#fff;color:#0F6E56;border-radius:10px;padding:8px 12px;font-size:17px;font-weight:600}
+.chip,.btn{border:2px solid #0F6E56;background:#fff;color:#0F6E56;border-radius:8px;padding:5px 10px;font-size:15px;font-weight:600}
 .chip.on{background:#0F6E56;color:#fff}
 .btn.pri{background:#0F6E56;color:#fff}
 .btn.warn{border-color:#B42318;color:#B42318}
-.btn.sm{padding:5px 9px;font-size:15px;white-space:nowrap}
-input,select,textarea{font-size:18px;padding:8px;border:2px solid #9AA5A0;border-radius:10px;color:#111;background:#fff}
-input[type=number]{width:90px}
+.btn.sm{padding:3px 8px;font-size:14px;white-space:nowrap}
+input,select,textarea{font-size:16px;padding:6px;border:2px solid #9AA5A0;border-radius:8px;color:#111;background:#fff}
+input[type=number]{width:80px}
 input.w{width:100%}
-label.f{display:flex;flex-direction:column;font-size:15px;color:#333;gap:4px}
-.ex{border-top:1px solid #D5DBD8;padding:12px 0}
+label.f{display:flex;flex-direction:column;font-size:14px;color:#333;gap:4px}
+.ex{border-top:1px solid #D5DBD8;padding:8px 0}
 .ex:first-of-type{border-top:none}
-.exname{font-size:19px;font-weight:700}
-.done{display:inline-block;background:#E1F5EE;color:#085041;border-radius:8px;padding:2px 8px;font-size:15px;font-weight:700;margin-left:6px}
-.hint{background:#FFF4DC;color:#5A3A00;border-radius:8px;padding:6px 10px;font-size:15px;margin:6px 0}
-.lbl{font-size:15px;color:#333;min-width:44px}
+.exname{font-size:17px;font-weight:700}
+.done{display:inline-block;background:#E1F5EE;color:#085041;border-radius:8px;padding:1px 6px;font-size:14px;font-weight:700;margin-left:6px}
+.hint{background:#FFF4DC;color:#5A3A00;border-radius:8px;padding:4px 8px;font-size:14px;margin:4px 0}
+.lbl{font-size:14px;color:#333;min-width:40px}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #D5DBD8;display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:none;padding:10px 0 12px;font-size:16px;color:#333;font-weight:600}
-nav button .i{display:block;font-size:22px}
+nav button{flex:1;background:none;border:none;padding:6px 0 8px;font-size:13px;color:#333;font-weight:600}
+nav button .i{display:block;font-size:20px}
 nav button.on{color:#0F6E56;border-top:4px solid #0F6E56;margin-top:-2px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
-.cal .h{font-size:14px;color:#333;font-weight:700}
-.cal .d{padding:8px 0;border-radius:10px;font-size:17px;background:#EEF1F0;color:#222;border:2px solid transparent}
+.cal .h{font-size:13px;color:#333;font-weight:700}
+.cal .d{padding:6px 0;border-radius:8px;font-size:15px;background:#EEF1F0;color:#222;border:2px solid transparent}
 .cal .d.lit{background:#0F6E56;color:#fff;font-weight:700}
 .cal .d.today{border-color:#EF9F27}
 .cal .d.sel{outline:3px solid #111}
 .cal .d.e{background:none}
-table{width:100%;border-collapse:collapse;font-size:16px}
-td,th{padding:6px 4px;border-bottom:1px solid #E1E5E3;text-align:left;vertical-align:top}
-th{font-size:15px;color:#333}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:4px 4px;border-bottom:1px solid #E1E5E3;text-align:left;vertical-align:top}
+th{font-size:14px;color:#333}
 .num{text-align:right;white-space:nowrap}
 .bad{color:#B42318;font-weight:700}
-.list-item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #E1E5E3}
-.total{font-size:22px;font-weight:800;color:#0F6E56}
-.status{font-size:15px;color:#333;margin-top:6px}
-svg.trend{width:100%;height:160px}
+.list-item{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #E1E5E3}
+.total{font-size:20px;font-weight:800;color:#0F6E56}
+.status{font-size:14px;color:#333;margin-top:4px}
+svg.trend{width:100%;height:150px}
+.kbimg{width:100%;border-radius:8px;border:1px solid #D5DBD8;display:block}
+.ovl{position:fixed;inset:0;background:#000;z-index:20;overflow:auto}
+.ovl img{width:100%;display:block}
+.ovl .x{position:fixed;top:10px;right:10px;z-index:21;background:#fff;color:#111;border:none;border-radius:20px;padding:6px 14px;font-size:16px;font-weight:700}
+.badge{display:inline-block;background:#E1F5EE;color:#085041;border-radius:6px;padding:0 6px;font-size:13px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -69,15 +74,20 @@ svg.trend{width:100%;height:160px}
   <button class="gear" data-act="tab" data-v="settings" aria-label="設定">⚙</button>
 </header>
 <main id="app"></main>
+<div id="ovl"></div>
 <nav id="nav">
   <button data-act="tab" data-v="today"><span class="i">🏃</span>今日</button>
   <button data-act="tab" data-v="records"><span class="i">📅</span>紀錄</button>
   <button data-act="tab" data-v="diet"><span class="i">🥗</span>飲食</button>
   <button data-act="tab" data-v="health"><span class="i">❤️</span>健康</button>
+  <button data-act="tab" data-v="kb"><span class="i">📖</span>教學</button>
 </nav>
 <script>
 'use strict';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.3.0';
+const KEY_CLD_NAME = 'cloudinary_name';
+const KEY_CLD_PRESET = 'cloudinary_preset';
+const KB_CARDIO = ['飛輪', '跑步機', '橢圓機', '走路'];
 const KEY = 'myfitness_db_v1';
 const KEY_GAS = 'myfitness_gas_url';
 const KEY_LOC = 'myfitness_loc';
@@ -100,7 +110,9 @@ const r1 = n => Math.round(n * 10) / 10;
 
 /* ---------- 器材與動作 ---------- */
 const LOCS = { room: '房間旁', company: '公司', carry: '隨身' };
-const CARDIO = { room: ['飛輪', '跑步機', '走路'], company: ['橢圓機', '走路'], carry: ['走路'] };
+const CARDIO = { room: ['飛輪', '跑步機', '舉重', '走路'], company: ['橢圓機', '舉重', '走路'], carry: ['走路'] };
+const MAX_SHOTS = 5;
+const DUP_MS = 2 * 60 * 1000;
 const EX = {
   press: { name: '坐姿肩推', kind: 'db' },
   row: { name: '站姿划船', kind: 'db' },
@@ -174,10 +186,11 @@ function normalize(d) {
   if (!d || typeof d !== 'object') return null;
   d.meta = d.meta || { updatedAt: 0 };
   ['workouts', 'monthly', 'diet', 'dietLog', 'notes'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  if (!d.kb || typeof d.kb !== 'object' || Array.isArray(d.kb)) d.kb = {};
   return d;
 }
 function load() { try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
-let DB = load() || seed();
+let DB = normalize(load() || seed());
 { const c = DB.workouts.find(w => w.id === 'c1124'); if (c && !c.start) { c.start = '05:54'; c.sec = 918; c.maxHr = 128; c.kcal = 114; c.note = ''; } }
 function persist() { localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save() { DB.meta.updatedAt = Date.now(); persist(); scheduleSync(); }
@@ -225,7 +238,7 @@ function proteinTotal() {
 }
 
 /* ---------- 介面狀態 ---------- */
-const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', scan: null, scanMsg: '', tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
+const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', kbSel: null, kbMsg: '', scan: null, scanMsg: '', showRaw: false, undo: null, tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
 { const t = new Date(); UI.calY = t.getFullYear(); UI.calM = t.getMonth(); UI.selDay = today(); }
 
 function tmpFor(ex) {
@@ -244,7 +257,7 @@ function render() {
   document.getElementById('hdrDate').textContent = fmtDate(today()) + '　v' + APP_VERSION;
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === UI.tab));
   const el = document.getElementById('app');
-  el.innerHTML = ({ today: vToday, records: vRecords, diet: vDiet, health: vHealth, settings: vSettings }[UI.tab])();
+  el.innerHTML = ({ today: vToday, records: vRecords, diet: vDiet, health: vHealth, kb: vKb, settings: vSettings }[UI.tab])();
 }
 
 function vToday() {
@@ -259,11 +272,11 @@ function vToday() {
   const items = CARDIO[UI.loc];
   if (!items.includes(UI.cardio)) UI.cardio = items[0];
   const todayCardio = entriesOn(t).filter(e => e.type === 'cardio');
-  const cardio = '<div class="card"><h2>有氧</h2><div class="row">' + items.map(i => '<button class="chip' + (UI.cardio === i ? ' on' : '') + '" data-act="cardioItem" data-v="' + esc(i) + '">' + esc(i) + '</button>').join('') + '</div>' +
+  const cardio = '<div class="card"><h2>有氧／舉重</h2><div class="row">' + items.map(i => '<button class="chip' + (UI.cardio === i ? ' on' : '') + '" data-act="cardioItem" data-v="' + esc(i) + '">' + esc(i) + '</button>').join('') + '</div>' +
     '<div class="row" style="margin-top:10px"><label class="f">分鐘<input type="number" inputmode="numeric" data-in="cardioMin" value="' + esc(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin) + '"></label>' +
     '<label class="f">平均心跳（選填）<input type="number" inputmode="numeric" data-in="cardioHr" value="' + esc(UI.cardioHr) + '"></label>' +
     '<button class="btn pri" data-act="saveCardio" style="align-self:flex-end">記錄</button></div>' +
-    '<div style="margin-top:10px"><label class="btn">📷 從 Samsung Health 截圖讀取<input type="file" accept="image/*" data-in="scanFile" style="display:none"></label></div>' + scanPanel() +
+    '<div style="margin-top:10px"><label class="btn">📷 從 Samsung Health 截圖讀取（可選 1～' + MAX_SHOTS + ' 張）<input type="file" accept="image/*" multiple data-in="scanFile" style="display:none"></label></div>' + scanPanel() +
     (todayCardio.length ? '<div class="status">今天：' + todayCardio.map(e => esc(cardioText(e))).join('、') + '</div>' : '') + '</div>';
 
   let str = '';
@@ -276,7 +289,8 @@ function vToday() {
   } else {
     str = '<div class="card"><h2>重訓</h2><div class="muted">這個地點沒有重訓器材。</div></div>';
   }
-  return banner + locs + cardio + str;
+  const undo = UI.undo ? '<div class="card" style="border:2px solid #0F6E56"><div class="row" style="justify-content:space-between"><div>已記錄 ✓ ' + esc(UI.undo.text) + '</div><button class="btn sm warn" data-act="undo">復原</button></div></div>' : '';
+  return banner + undo + locs + cardio + str;
 }
 
 function exRow(ex) {
@@ -295,7 +309,7 @@ function exRow(ex) {
   }
   const repsLab = d.repsLabel === '左右各' ? '左右各' : (d.repsLabel === '來回' ? '來回' : '次數');
   const plan = fmtStr({ ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets });
-  const head = '<div class="ex"><div><span class="exname">' + esc(d.name) + '</span>' +
+  const head = '<div class="ex"><div><span class="exname">' + esc(d.name) + '</span> <button class="btn sm" data-act="kbOpen" data-v="' + ex + '">ⓘ 教學</button>' +
     done.map(e => '<span class="done">✓ ' + esc(fmtStr(e)) + '</span>').join('') + '</div>' +
     '<div class="muted">上次：' + (last ? esc(fmtStr(last)) + '（' + last.date.slice(5).replace('-', '/') + (last.hist ? '，歷史' : '') + '）' : '無') +
     (mx ? '　歷史最高：' + mx.w + ' kg' : '') + '</div>' +
@@ -328,7 +342,7 @@ function vRecords() {
 
   const es = entriesOn(UI.selDay);
   const day = '<div class="card"><h2>' + fmtDate(UI.selDay) + (isLit(UI.selDay) ? '　✓ 有亮' : '') + '</h2>' +
-    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? '有氧｜' + esc(cardioText(e)) : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
+    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? (e.item === '舉重' ? '舉重｜' : '有氧｜') + esc(cardioText(e)) : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
       (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
 
   const exIds = Object.keys(EX).filter(k => exRecords(k).length);
@@ -421,8 +435,66 @@ function vSettings() {
     '<div class="card"><h2>截圖讀取（Gemini）</h2><label class="f">Gemini API Key<input class="w" data-in="gKey" type="password" value="' + esc(localStorage.getItem(KEY_GKEY) || '') + '"></label>' +
     '<label class="f" style="margin-top:8px">模型<input class="w" data-in="gModel" value="' + esc(localStorage.getItem(KEY_GMODEL) || DEF_MODEL) + '"></label>' +
     '<div style="margin-top:8px"><button class="btn pri" data-act="saveAi">儲存</button></div><div class="muted" style="margin-top:6px">Key 只存在這支手機，不會同步到 Google Sheets。截圖只用來讀數字，不會保存。</div></div>' +
+    '<div class="card"><h2>教學圖上傳（Cloudinary）</h2><label class="f">Cloud name<input class="w" data-in="cldName" value="' + esc(localStorage.getItem(KEY_CLD_NAME) || '') + '"></label>' +
+    '<label class="f" style="margin-top:6px">Unsigned Upload Preset<input class="w" data-in="cldPreset" value="' + esc(localStorage.getItem(KEY_CLD_PRESET) || '') + '"></label>' +
+    '<div style="margin-top:6px"><button class="btn pri" data-act="saveCld">儲存</button></div></div>' +
     '<div class="card"><h2>備份</h2><div class="row"><button class="btn" data-act="export">下載備份 JSON</button><label class="btn">匯入備份<input type="file" accept=".json,application/json" data-in="importFile" style="display:none"></label></div></div>' +
     '<div class="card"><h2>關於</h2><div>我的健身 My Fitness v' + APP_VERSION + '</div><div class="muted">資料最後更新：' + (DB.meta.updatedAt ? new Date(DB.meta.updatedAt).toLocaleString() : '—') + '</div></div>';
+}
+
+/* ---------- 教學 ---------- */
+function kbName(k) { return k.indexOf('c:') === 0 ? k.slice(2) : (EX[k] ? EX[k].name : k); }
+function kbOf(k) { if (!DB.kb[k]) DB.kb[k] = { img: '', videos: [], note: '' }; return DB.kb[k]; }
+function kbBadges(k) { const e = DB.kb[k]; if (!e) return ''; return (e.img ? '<span class="badge">圖</span>' : '') + (e.videos && e.videos.length ? '<span class="badge">影片 ' + e.videos.length + '</span>' : ''); }
+function vKb() {
+  if (UI.kbSel) return vKbDetail(UI.kbSel);
+  const row = k => '<div class="list-item" data-act="kbOpen" data-v="' + esc(k) + '" style="cursor:pointer"><div><b>' + esc(kbName(k)) + '</b>' + kbBadges(k) + '</div><div class="muted">›</div></div>';
+  return '<div class="card"><h2>重訓動作</h2>' + Object.keys(EX).map(row).join('') + '</div>' +
+    '<div class="card"><h2>有氧器材</h2>' + KB_CARDIO.map(i => row('c:' + i)).join('') + '</div>' +
+    '<div class="muted" style="padding:0 4px">每個動作可放一張教學圖（看過後離線也能看）、影片連結和自己的筆記。</div>';
+}
+function vKbDetail(k) {
+  const e = DB.kb[k] || { img: '', videos: [], note: '' };
+  const q = encodeURIComponent(kbName(k) + ' 正確姿勢 教學');
+  return '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(kbName(k)) + '</h2><button class="btn sm" data-act="kbBack">‹ 全部動作</button></div></div>' +
+    '<div class="card"><h2>教學圖</h2>' + (e.img ? '<img class="kbimg" src="' + esc(e.img) + '" data-act="kbZoom" alt="教學圖"><div class="muted">點圖可全螢幕放大，雙指縮放。</div>' : '<div class="muted">還沒有教學圖。</div>') +
+    '<div class="row" style="margin-top:6px"><label class="btn">' + (e.img ? '更換教學圖' : '上傳教學圖') + '<input type="file" accept="image/*" data-in="kbImg" style="display:none"></label>' + (e.img ? '<button class="btn sm warn" data-act="kbDelImg">移除圖</button>' : '') + '</div>' +
+    (UI.kbMsg ? '<div class="status">' + esc(UI.kbMsg) + '</div>' : '') + '</div>' +
+    '<div class="card"><h2>影片</h2>' + (e.videos || []).map((v, i) => '<div class="list-item"><a href="' + esc(v.url) + '" target="_blank" rel="noopener">▶ ' + esc(v.title || v.url) + '</a><button class="btn sm warn" data-act="kbDelVid" data-v="' + i + '">刪</button></div>').join('') +
+    '<div class="row" style="margin-top:6px"><a class="btn" href="https://www.youtube.com/results?search_query=' + q + '" target="_blank" rel="noopener">🔎 YouTube 搜尋（中文）</a></div>' +
+    '<div class="muted" style="margin-top:6px">找到喜歡的影片，複製連結貼在下面：</div>' +
+    '<input class="w" data-in="vidTitle" placeholder="影片名稱（選填）" style="margin-top:4px"><div class="row" style="margin-top:4px"><input data-in="vidUrl" placeholder="https://youtu.be/..." style="flex:1"><button class="btn pri" data-act="kbAddVid">加入</button></div></div>' +
+    '<div class="card"><h2>我的筆記</h2><textarea class="w" data-in="kbNote" rows="3" placeholder="例如：膝蓋不舒服時改做…">' + esc(e.note || '') + '</textarea><div style="margin-top:4px"><button class="btn pri" data-act="kbSaveNote">儲存筆記</button></div></div>';
+}
+function toJpegBlob(file, maxSide, q) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('壓縮失敗')), 'image/jpeg', q);
+    };
+    img.onerror = () => rej(new Error('無法讀取圖片'));
+    img.src = url;
+  });
+}
+async function kbUpload(file) {
+  const name = localStorage.getItem(KEY_CLD_NAME), preset = localStorage.getItem(KEY_CLD_PRESET);
+  if (!name || !preset) { alert('請先到 ⚙ 設定填 Cloudinary 的 Cloud name 和 Upload Preset'); return; }
+  const k = UI.kbSel; UI.kbMsg = '上傳中…'; render();
+  try {
+    const blob = await toJpegBlob(file, 2000, 0.85);
+    const fd = new FormData(); fd.append('file', blob, 'kb.jpg'); fd.append('upload_preset', preset);
+    const r = await fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(name) + '/image/upload', { method: 'POST', body: fd });
+    const j = await r.json(); if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    kbOf(k).img = j.secure_url; UI.kbMsg = '已上傳'; save();
+  } catch (e) { UI.kbMsg = '上傳失敗：' + e.message; }
+  render();
+}
+function zoom(src) {
+  const o = document.getElementById('ovl');
+  o.innerHTML = '<div class="ovl"><button class="x" data-act="unzoom">✕ 關閉</button><img src="' + esc(src) + '" alt=""></div>';
 }
 
 /* ---------- 有氧與截圖讀取 ---------- */
@@ -439,7 +511,7 @@ function cardioText(e) {
   if (e.kcal) x.push(e.kcal + ' 大卡');
   return s + (x.length ? '（' + x.join('，') + '）' : '');
 }
-const ITEM_MAP = [[/單車|飛輪|自行車|cycl|bik/i, '飛輪'], [/跑步機|treadmill/i, '跑步機'], [/橢圓|elliptical/i, '橢圓機'], [/走|walk|健行/i, '走路']];
+const ITEM_MAP = [[/舉重|重量訓練|重訓|weight|strength/i, '舉重'], [/單車|飛輪|自行車|cycl|bik/i, '飛輪'], [/跑步機|treadmill/i, '跑步機'], [/橢圓|elliptical/i, '橢圓機'], [/走|walk|健行/i, '走路']];
 function mapItem(name) { for (const p of ITEM_MAP) if (p[0].test(name || '')) return p[1]; return name || '其他'; }
 function durSec(s) {
   if (s == null) return null; if (typeof s === 'number') return s;
@@ -447,15 +519,17 @@ function durSec(s) {
   return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 60;
 }
 function scanPanel() {
-  if (UI.scanMsg && !UI.scan) return '<div class="status">' + esc(UI.scanMsg) + '</div>';
+  if (UI.scanMsg && !UI.scan) return '<div class="status">' + esc(UI.scanMsg) + '</div>' + (UI.scanRaw ? '<pre style="white-space:pre-wrap;word-break:break-all;font-size:13px;background:#F2F4F3;padding:8px;border-radius:8px">原始回覆：' + esc(UI.scanRaw) + '</pre>' : '');
   if (!UI.scan) return '';
   const s = UI.scan, f = (k, lab, type) => '<label class="f">' + lab + '<input ' + (type ? 'type="' + type + '" ' : '') + 'data-scan="' + k + '" value="' + esc(s[k] == null ? '' : s[k]) + '"></label>';
   return '<div class="card" style="margin-top:10px;border:2px solid #0F6E56"><h2>讀到的內容，請確認</h2>' +
     (s.raw ? '<div class="muted">截圖上的運動：' + esc(s.raw) + '</div>' : '') +
     '<div class="row" style="margin-top:6px">' + f('item', '項目') + f('date', '日期', 'date') + f('start', '開始時間') + '</div>' +
     '<div class="row" style="margin-top:6px">' + f('min', '分鐘', 'number') + f('hr', '平均心跳', 'number') + f('maxHr', '最高心跳', 'number') + f('kcal', '大卡', 'number') + '</div>' +
+    (s.missing && s.missing.length ? '<div class="hint">截圖上找不到：' + esc(s.missing.join('、')) + '（可以手動補，或多選一張有這些數字的截圖重讀）</div>' : '') +
     (s.dup ? '<div class="hint">這筆好像已經記過了（同一天、同一開始時間），確定還要再記一次嗎？</div>' : '') +
-    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="scanSave">寫入紀錄</button><button class="btn" data-act="scanCancel">取消</button></div></div>';
+    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="scanSave">寫入紀錄</button><button class="btn" data-act="scanCancel">取消</button><button class="btn sm" data-act="toggleRaw">' + (UI.showRaw ? '隱藏原始回覆' : '顯示原始回覆') + '</button></div>' +
+    (UI.showRaw ? '<pre style="white-space:pre-wrap;word-break:break-all;font-size:13px;background:#F2F4F3;padding:8px;border-radius:8px">' + esc(s.rawText || '') + '</pre>' : '') + '</div>';
 }
 function toJpegB64(file) {
   return new Promise((res, rej) => {
@@ -470,37 +544,52 @@ function toJpegB64(file) {
     img.src = url;
   });
 }
-async function scanImage(file) {
+async function scanImage(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  if (files.length > MAX_SHOTS) { alert('一次最多 ' + MAX_SHOTS + ' 張，請少選幾張'); return; }
   const key = localStorage.getItem(KEY_GKEY);
   if (!key) { alert('請先到 ⚙ 設定填 Gemini API Key'); return; }
   const model = localStorage.getItem(KEY_GMODEL) || DEF_MODEL;
-  UI.scan = null; UI.scanMsg = '讀取中…'; render();
+  UI.scan = null; UI.scanRaw = ''; UI.showRaw = false; UI.scanMsg = '讀取中（' + files.length + ' 張）…'; render();
+  let txt = '';
   try {
-    const b64 = await toJpegB64(file);
-    const prompt = '這是 Samsung Health 的運動紀錄截圖。只回傳 JSON，欄位：exercise（運動名稱原文）、date（YYYY-MM-DD）、start（開始時間 HH:MM）、duration（總計持續時間原文，如 15:18 或 1:02:30）、avg_hr（平均心跳率數字）、max_hr（最高心跳率數字）、kcal（健身熱量數字）。讀不到的欄位填 null，不要猜。';
+    const imgs = [];
+    for (const f of files) imgs.push(await toJpegB64(f));
+    const prompt = '以下 ' + files.length + ' 張是 Samsung Health 同一次運動紀錄的截圖（可能是同一頁捲動後的不同段落）。請把所有截圖的資訊合併成一筆，只回傳一個 JSON 物件（不要陣列），欄位：exercise（運動名稱原文，如「室內單車」「舉重」）、date（YYYY-MM-DD）、start（開始時間 HH:MM）、duration（總計持續時間原文，如 15:18 或 1:02:30）、avg_hr（平均心跳率數字）、max_hr（最高心跳率數字）、kcal（健身熱量數字）。所有截圖都讀不到的欄位填 null，不要猜。';
+    const parts = [{ text: prompt }].concat(imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } })));
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
     });
     const j = await r.json();
     if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
-    const txt = (((j.candidates || [])[0] || {}).content || {}).parts ? j.candidates[0].content.parts.map(p => p.text || '').join('') : '';
-    const d = JSON.parse(txt.replace(/^```json|```$/g, '').trim());
+    const cand = (j.candidates || [])[0] || {};
+    txt = ((cand.content || {}).parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+    if (!txt) throw new Error('Gemini 沒有回傳內容' + (cand.finishReason ? '（' + cand.finishReason + '）' : ''));
+    let d = JSON.parse(txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim());
+    if (Array.isArray(d)) d = d.reduce((a, o) => { Object.keys(o || {}).forEach(k => { if (a[k] == null && o[k] != null) a[k] = o[k]; }); return a; }, {});
     const sec = durSec(d.duration);
     const date = /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : today();
     const start = d.start || '';
+    const names = { exercise: '運動項目', date: '日期', start: '開始時間', duration: '持續時間', avg_hr: '平均心跳', max_hr: '最高心跳', kcal: '大卡' };
+    const missing = Object.keys(names).filter(k => d[k] == null || d[k] === '').map(k => names[k]);
     UI.scan = { raw: d.exercise || '', item: mapItem(d.exercise), date, start, sec, min: sec != null ? Math.round(sec / 60) : '', hr: d.avg_hr == null ? '' : d.avg_hr, maxHr: d.max_hr == null ? '' : d.max_hr, kcal: d.kcal == null ? '' : d.kcal,
-      dup: !!start && DB.workouts.some(w => w.type === 'cardio' && w.date === date && w.start === start) };
+      missing, rawText: txt, dup: !!start && DB.workouts.some(w => w.type === 'cardio' && w.date === date && w.start === start) };
     UI.scanMsg = '';
-  } catch (e) { UI.scan = null; UI.scanMsg = '讀取失敗：' + e.message; }
+  } catch (e) { UI.scan = null; UI.scanMsg = '讀取失敗：' + e.message; UI.scanRaw = txt; }
   render();
 }
+function recentDup(pred) { const now = Date.now(); return DB.workouts.find(w => w.ts && now - w.ts < DUP_MS && pred(w)); }
+function addEntry(e, text) { e.ts = Date.now(); DB.workouts.push(e); UI.undo = { id: e.id, text }; save(); }
 function scanSave() {
   const s = UI.scan; if (!s) return;
   const m = num(s.min); if (!m || m <= 0) { alert('請確認分鐘數'); return; }
   const loc = s.item === '橢圓機' ? 'company' : 'room';
-  DB.workouts.push({ id: uid(), date: s.date || today(), type: 'cardio', item: s.item || '其他', min: m, sec: num(s.sec), start: s.start || '', hr: num(s.hr), maxHr: num(s.maxHr), kcal: num(s.kcal), loc, hist: false, note: '' });
-  UI.scan = null; UI.scanMsg = '已寫入 ' + (s.date || today()) + ' 的紀錄'; save();
+  if (s.dup && !confirm('這筆好像已經記過了，確定再記一次？')) return;
+  const e = { id: uid(), date: s.date || today(), type: 'cardio', item: s.item || '其他', min: m, sec: num(s.sec), start: s.start || '', hr: num(s.hr), maxHr: num(s.maxHr), kcal: num(s.kcal), loc, hist: false, note: '' };
+  UI.scan = null; UI.showRaw = false; UI.scanMsg = '';
+  addEntry(e, (e.date !== today() ? e.date + ' ' : '') + cardioText(e));
 }
 
 /* ---------- 事件 ---------- */
@@ -509,7 +598,22 @@ document.addEventListener('click', ev => {
   const a = b.dataset.act, v = b.dataset.v;
   const t = today();
   switch (a) {
-    case 'tab': UI.tab = v; window.scrollTo(0, 0); break;
+    case 'tab': if (v === 'kb' && UI.tab !== 'kb') UI.kbSel = null; UI.tab = v; UI.undo = null; window.scrollTo(0, 0); break;
+    case 'undo': if (UI.undo) { DB.workouts = DB.workouts.filter(w => w.id !== UI.undo.id); UI.undo = null; save(); } break;
+    case 'toggleRaw': UI.showRaw = !UI.showRaw; break;
+    case 'kbOpen': UI.tab = 'kb'; UI.kbSel = v; UI.kbMsg = ''; UI.undo = null; window.scrollTo(0, 0); break;
+    case 'kbBack': UI.kbSel = null; break;
+    case 'kbZoom': zoom(b.getAttribute('src')); return;
+    case 'unzoom': document.getElementById('ovl').innerHTML = ''; return;
+    case 'kbDelImg': if (!confirm('移除這張教學圖？')) return; kbOf(UI.kbSel).img = ''; save(); break;
+    case 'kbAddVid': {
+      const u = document.querySelector('[data-in="vidUrl"]').value.trim(), tt = document.querySelector('[data-in="vidTitle"]').value.trim();
+      if (!/^https?:\/\//.test(u)) { alert('請貼上影片網址'); return; }
+      kbOf(UI.kbSel).videos.push({ title: tt, url: u }); save(); break;
+    }
+    case 'kbDelVid': kbOf(UI.kbSel).videos.splice(Number(v), 1); save(); break;
+    case 'kbSaveNote': kbOf(UI.kbSel).note = document.querySelector('[data-in="kbNote"]').value; UI.kbMsg = ''; save(); break;
+    case 'saveCld': localStorage.setItem(KEY_CLD_NAME, document.querySelector('[data-in="cldName"]').value.trim()); localStorage.setItem(KEY_CLD_PRESET, document.querySelector('[data-in="cldPreset"]').value.trim()); UI.syncMsg = 'Cloudinary 設定已儲存'; break;
     case 'loc': UI.loc = v; localStorage.setItem(KEY_LOC, v); break;
     case 'cardioItem': UI.cardio = v; UI.cardioMin = null; break;
     case 'scanSave': scanSave(); break;
@@ -517,8 +621,9 @@ document.addEventListener('click', ev => {
     case 'saveAi': { localStorage.setItem(KEY_GKEY, document.querySelector('[data-in="gKey"]').value.trim()); localStorage.setItem(KEY_GMODEL, document.querySelector('[data-in="gModel"]').value.trim() || DEF_MODEL); UI.syncMsg = 'Gemini 設定已儲存'; break; }
     case 'saveCardio': {
       const m = num(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
-      DB.workouts.push({ id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' });
-      UI.cardioMin = null; UI.cardioHr = ''; save(); break;
+      if (recentDup(w => w.type === 'cardio' && w.date === t && w.item === UI.cardio) && !confirm('剛剛已經記過' + UI.cardio + '，確定再記一筆？')) return;
+      const e = { id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' };
+      UI.cardioMin = null; UI.cardioHr = ''; addEntry(e, cardioText(e)); break;
     }
     case 'toggleExtra': UI.showExtra = !UI.showExtra; break;
     case 'openEx': UI.open[b.dataset.ex] = !UI.open[b.dataset.ex]; break;
@@ -530,8 +635,9 @@ document.addEventListener('click', ev => {
     }
     case 'saveStr': {
       const ex = b.dataset.ex, tp = tmpFor(ex), d = EX[ex];
-      DB.workouts.push({ id: uid(), date: t, type: 'str', ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (d.kind === 'bw' || tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets, feel: tp.feel, pain: tp.pain, loc: UI.loc, hist: false, note: '' });
-      tp.feel = ''; tp.pain = ''; UI.open[ex] = false; save(); break;
+      if (recentDup(w => w.type === 'str' && w.date === t && w.ex === ex) && !confirm('剛剛已經記過' + d.name + '，確定再記一筆？')) return;
+      const e = { id: uid(), date: t, type: 'str', ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (d.kind === 'bw' || tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets, feel: tp.feel, pain: tp.pain, loc: UI.loc, hist: false, note: '' };
+      tp.feel = ''; tp.pain = ''; UI.open[ex] = false; addEntry(e, d.name + ' ' + fmtStr(e)); break;
     }
     case 'mon': { let m = UI.calM + Number(v), y = UI.calY; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } UI.calM = m; UI.calY = y; break; }
     case 'selDay': UI.selDay = v; break;
@@ -568,7 +674,8 @@ document.addEventListener('change', ev => {
   const el = ev.target;
   if (el.dataset.in === 'selEx') { UI.selEx = el.value; render(); }
   if (el.dataset.in === 'importFile' && el.files[0]) importJson(el.files[0]);
-  if (el.dataset.in === 'scanFile' && el.files[0]) { scanImage(el.files[0]); el.value = ''; }
+  if (el.dataset.in === 'kbImg' && el.files[0]) { const f = el.files[0]; el.value = ''; kbUpload(f); }
+  if (el.dataset.in === 'scanFile' && el.files.length) { const fl = Array.from(el.files); el.value = ''; scanImage(fl); }
 
 });
 
