@@ -77,10 +77,13 @@ svg.trend{width:100%;height:160px}
 </nav>
 <script>
 'use strict';
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0';
 const KEY = 'myfitness_db_v1';
 const KEY_GAS = 'myfitness_gas_url';
 const KEY_LOC = 'myfitness_loc';
+const KEY_GKEY = 'myfitness_gemini_key';
+const KEY_GMODEL = 'myfitness_gemini_model';
+const DEF_MODEL = 'gemini-2.5-flash';
 
 /* ---------- 日期工具 ---------- */
 const pad = n => String(n).padStart(2, '0');
@@ -175,6 +178,7 @@ function normalize(d) {
 }
 function load() { try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
 let DB = load() || seed();
+{ const c = DB.workouts.find(w => w.id === 'c1124'); if (c && !c.start) { c.start = '05:54'; c.sec = 918; c.maxHr = 128; c.kcal = 114; c.note = ''; } }
 function persist() { localStorage.setItem(KEY, JSON.stringify(DB)); }
 function save() { DB.meta.updatedAt = Date.now(); persist(); scheduleSync(); }
 persist();
@@ -221,7 +225,7 @@ function proteinTotal() {
 }
 
 /* ---------- 介面狀態 ---------- */
-const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: '', cardioHr: '', tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
+const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', scan: null, scanMsg: '', tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
 { const t = new Date(); UI.calY = t.getFullYear(); UI.calM = t.getMonth(); UI.selDay = today(); }
 
 function tmpFor(ex) {
@@ -256,10 +260,11 @@ function vToday() {
   if (!items.includes(UI.cardio)) UI.cardio = items[0];
   const todayCardio = entriesOn(t).filter(e => e.type === 'cardio');
   const cardio = '<div class="card"><h2>有氧</h2><div class="row">' + items.map(i => '<button class="chip' + (UI.cardio === i ? ' on' : '') + '" data-act="cardioItem" data-v="' + esc(i) + '">' + esc(i) + '</button>').join('') + '</div>' +
-    '<div class="row" style="margin-top:10px"><label class="f">分鐘<input type="number" inputmode="numeric" data-in="cardioMin" value="' + esc(UI.cardioMin) + '" placeholder="15"></label>' +
+    '<div class="row" style="margin-top:10px"><label class="f">分鐘<input type="number" inputmode="numeric" data-in="cardioMin" value="' + esc(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin) + '"></label>' +
     '<label class="f">平均心跳（選填）<input type="number" inputmode="numeric" data-in="cardioHr" value="' + esc(UI.cardioHr) + '"></label>' +
     '<button class="btn pri" data-act="saveCardio" style="align-self:flex-end">記錄</button></div>' +
-    (todayCardio.length ? '<div class="status">今天：' + todayCardio.map(e => esc(e.item) + ' ' + e.min + ' 分' + (e.hr ? '（心跳 ' + e.hr + '）' : '')).join('、') + '</div>' : '') + '</div>';
+    '<div style="margin-top:10px"><label class="btn">📷 從 Samsung Health 截圖讀取<input type="file" accept="image/*" data-in="scanFile" style="display:none"></label></div>' + scanPanel() +
+    (todayCardio.length ? '<div class="status">今天：' + todayCardio.map(e => esc(cardioText(e))).join('、') + '</div>' : '') + '</div>';
 
   let str = '';
   const defs = DEF[UI.loc], extras = EXTRA[UI.loc];
@@ -323,7 +328,7 @@ function vRecords() {
 
   const es = entriesOn(UI.selDay);
   const day = '<div class="card"><h2>' + fmtDate(UI.selDay) + (isLit(UI.selDay) ? '　✓ 有亮' : '') + '</h2>' +
-    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? '有氧｜' + esc(e.item) + ' ' + e.min + ' 分' + (e.hr ? '，心跳 ' + e.hr : '') : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
+    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? '有氧｜' + esc(cardioText(e)) : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
       (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
 
   const exIds = Object.keys(EX).filter(k => exRecords(k).length);
@@ -413,8 +418,89 @@ function vSettings() {
     '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="saveGas">儲存網址</button><button class="btn" data-act="syncNow">立即同步</button></div>' +
     '<div class="status">' + esc(UI.syncMsg || (url ? '已設定' : '尚未設定，資料只存在這支手機')) + '</div>' +
     '<div class="muted" style="margin-top:6px">開啟 App 時會比對雲端；雲端較新就下載，否則上傳。每次記錄後也會自動上傳。</div></div>' +
+    '<div class="card"><h2>截圖讀取（Gemini）</h2><label class="f">Gemini API Key<input class="w" data-in="gKey" type="password" value="' + esc(localStorage.getItem(KEY_GKEY) || '') + '"></label>' +
+    '<label class="f" style="margin-top:8px">模型<input class="w" data-in="gModel" value="' + esc(localStorage.getItem(KEY_GMODEL) || DEF_MODEL) + '"></label>' +
+    '<div style="margin-top:8px"><button class="btn pri" data-act="saveAi">儲存</button></div><div class="muted" style="margin-top:6px">Key 只存在這支手機，不會同步到 Google Sheets。截圖只用來讀數字，不會保存。</div></div>' +
     '<div class="card"><h2>備份</h2><div class="row"><button class="btn" data-act="export">下載備份 JSON</button><label class="btn">匯入備份<input type="file" accept=".json,application/json" data-in="importFile" style="display:none"></label></div></div>' +
     '<div class="card"><h2>關於</h2><div>我的健身 My Fitness v' + APP_VERSION + '</div><div class="muted">資料最後更新：' + (DB.meta.updatedAt ? new Date(DB.meta.updatedAt).toLocaleString() : '—') + '</div></div>';
+}
+
+/* ---------- 有氧與截圖讀取 ---------- */
+function defMin(item) {
+  const r = DB.workouts.filter(w => w.type === 'cardio' && w.item === item && !w.hist);
+  return r.length ? r[r.length - 1].min : 10;
+}
+function cardioText(e) {
+  let s = e.item + ' ' + e.min + ' 分';
+  const x = [];
+  if (e.start) x.push(e.start + ' 開始');
+  if (e.hr) x.push('平均心跳 ' + e.hr);
+  if (e.maxHr) x.push('最高 ' + e.maxHr);
+  if (e.kcal) x.push(e.kcal + ' 大卡');
+  return s + (x.length ? '（' + x.join('，') + '）' : '');
+}
+const ITEM_MAP = [[/單車|飛輪|自行車|cycl|bik/i, '飛輪'], [/跑步機|treadmill/i, '跑步機'], [/橢圓|elliptical/i, '橢圓機'], [/走|walk|健行/i, '走路']];
+function mapItem(name) { for (const p of ITEM_MAP) if (p[0].test(name || '')) return p[1]; return name || '其他'; }
+function durSec(s) {
+  if (s == null) return null; if (typeof s === 'number') return s;
+  const p = String(s).trim().split(':').map(Number); if (p.some(isNaN)) return null;
+  return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 60;
+}
+function scanPanel() {
+  if (UI.scanMsg && !UI.scan) return '<div class="status">' + esc(UI.scanMsg) + '</div>';
+  if (!UI.scan) return '';
+  const s = UI.scan, f = (k, lab, type) => '<label class="f">' + lab + '<input ' + (type ? 'type="' + type + '" ' : '') + 'data-scan="' + k + '" value="' + esc(s[k] == null ? '' : s[k]) + '"></label>';
+  return '<div class="card" style="margin-top:10px;border:2px solid #0F6E56"><h2>讀到的內容，請確認</h2>' +
+    (s.raw ? '<div class="muted">截圖上的運動：' + esc(s.raw) + '</div>' : '') +
+    '<div class="row" style="margin-top:6px">' + f('item', '項目') + f('date', '日期', 'date') + f('start', '開始時間') + '</div>' +
+    '<div class="row" style="margin-top:6px">' + f('min', '分鐘', 'number') + f('hr', '平均心跳', 'number') + f('maxHr', '最高心跳', 'number') + f('kcal', '大卡', 'number') + '</div>' +
+    (s.dup ? '<div class="hint">這筆好像已經記過了（同一天、同一開始時間），確定還要再記一次嗎？</div>' : '') +
+    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="scanSave">寫入紀錄</button><button class="btn" data-act="scanCancel">取消</button></div></div>';
+}
+function toJpegB64(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = () => rej(new Error('無法讀取圖片'));
+    img.src = url;
+  });
+}
+async function scanImage(file) {
+  const key = localStorage.getItem(KEY_GKEY);
+  if (!key) { alert('請先到 ⚙ 設定填 Gemini API Key'); return; }
+  const model = localStorage.getItem(KEY_GMODEL) || DEF_MODEL;
+  UI.scan = null; UI.scanMsg = '讀取中…'; render();
+  try {
+    const b64 = await toJpegB64(file);
+    const prompt = '這是 Samsung Health 的運動紀錄截圖。只回傳 JSON，欄位：exercise（運動名稱原文）、date（YYYY-MM-DD）、start（開始時間 HH:MM）、duration（總計持續時間原文，如 15:18 或 1:02:30）、avg_hr（平均心跳率數字）、max_hr（最高心跳率數字）、kcal（健身熱量數字）。讀不到的欄位填 null，不要猜。';
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: b64 } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    const txt = (((j.candidates || [])[0] || {}).content || {}).parts ? j.candidates[0].content.parts.map(p => p.text || '').join('') : '';
+    const d = JSON.parse(txt.replace(/^```json|```$/g, '').trim());
+    const sec = durSec(d.duration);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : today();
+    const start = d.start || '';
+    UI.scan = { raw: d.exercise || '', item: mapItem(d.exercise), date, start, sec, min: sec != null ? Math.round(sec / 60) : '', hr: d.avg_hr == null ? '' : d.avg_hr, maxHr: d.max_hr == null ? '' : d.max_hr, kcal: d.kcal == null ? '' : d.kcal,
+      dup: !!start && DB.workouts.some(w => w.type === 'cardio' && w.date === date && w.start === start) };
+    UI.scanMsg = '';
+  } catch (e) { UI.scan = null; UI.scanMsg = '讀取失敗：' + e.message; }
+  render();
+}
+function scanSave() {
+  const s = UI.scan; if (!s) return;
+  const m = num(s.min); if (!m || m <= 0) { alert('請確認分鐘數'); return; }
+  const loc = s.item === '橢圓機' ? 'company' : 'room';
+  DB.workouts.push({ id: uid(), date: s.date || today(), type: 'cardio', item: s.item || '其他', min: m, sec: num(s.sec), start: s.start || '', hr: num(s.hr), maxHr: num(s.maxHr), kcal: num(s.kcal), loc, hist: false, note: '' });
+  UI.scan = null; UI.scanMsg = '已寫入 ' + (s.date || today()) + ' 的紀錄'; save();
 }
 
 /* ---------- 事件 ---------- */
@@ -425,11 +511,14 @@ document.addEventListener('click', ev => {
   switch (a) {
     case 'tab': UI.tab = v; window.scrollTo(0, 0); break;
     case 'loc': UI.loc = v; localStorage.setItem(KEY_LOC, v); break;
-    case 'cardioItem': UI.cardio = v; break;
+    case 'cardioItem': UI.cardio = v; UI.cardioMin = null; break;
+    case 'scanSave': scanSave(); break;
+    case 'scanCancel': UI.scan = null; UI.scanMsg = ''; break;
+    case 'saveAi': { localStorage.setItem(KEY_GKEY, document.querySelector('[data-in="gKey"]').value.trim()); localStorage.setItem(KEY_GMODEL, document.querySelector('[data-in="gModel"]').value.trim() || DEF_MODEL); UI.syncMsg = 'Gemini 設定已儲存'; break; }
     case 'saveCardio': {
-      const m = num(UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
+      const m = num(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
       DB.workouts.push({ id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' });
-      UI.cardioMin = ''; UI.cardioHr = ''; save(); break;
+      UI.cardioMin = null; UI.cardioHr = ''; save(); break;
     }
     case 'toggleExtra': UI.showExtra = !UI.showExtra; break;
     case 'openEx': UI.open[b.dataset.ex] = !UI.open[b.dataset.ex]; break;
@@ -473,11 +562,14 @@ document.addEventListener('input', ev => {
   if (el.dataset.tmp) { const p = el.dataset.tmp.split(':'); const tp = tmpFor(p[0]); tp[p[1]] = num(el.value); if (p[1] === 'w' && el.value === '') tp.w = null; return; }
   if (el.dataset.in === 'cardioMin') UI.cardioMin = el.value;
   if (el.dataset.in === 'cardioHr') UI.cardioHr = el.value;
+  if (el.dataset.scan && UI.scan) UI.scan[el.dataset.scan] = el.value;
 });
 document.addEventListener('change', ev => {
   const el = ev.target;
   if (el.dataset.in === 'selEx') { UI.selEx = el.value; render(); }
   if (el.dataset.in === 'importFile' && el.files[0]) importJson(el.files[0]);
+  if (el.dataset.in === 'scanFile' && el.files[0]) { scanImage(el.files[0]); el.value = ''; }
+
 });
 
 function saveSection(id) {
