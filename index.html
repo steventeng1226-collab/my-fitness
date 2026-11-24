@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Fitness</title>
+<meta name="theme-color" content="#0F6E56">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:18px;line-height:1.5;color:#111;background:#F2F4F3;padding-bottom:84px}
+header{position:sticky;top:0;z-index:5;background:#0F6E56;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:20px;margin:0;font-weight:700}
+header .sub{font-size:14px;opacity:.95}
+.gear{background:none;border:none;color:#fff;font-size:26px;padding:4px 8px}
+main{padding:12px;max-width:720px;margin:0 auto}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #D5DBD8}
+.card h2{font-size:19px;margin:0 0 10px}
+.banner{border-radius:14px;padding:14px;margin-bottom:12px;font-size:19px;font-weight:700}
+.b-ok{background:#0F6E56;color:#fff}
+.b-todo{background:#FFF4DC;color:#5A3A00;border:2px solid #EF9F27}
+.b-warn{background:#FDE3E3;color:#7A1414;border:2px solid #D33}
+.small{font-size:15px;color:#333}
+.muted{font-size:15px;color:#444}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip,.btn{border:2px solid #0F6E56;background:#fff;color:#0F6E56;border-radius:10px;padding:8px 12px;font-size:17px;font-weight:600}
+.chip.on{background:#0F6E56;color:#fff}
+.btn.pri{background:#0F6E56;color:#fff}
+.btn.warn{border-color:#B42318;color:#B42318}
+.btn.sm{padding:5px 9px;font-size:15px;white-space:nowrap}
+input,select,textarea{font-size:18px;padding:8px;border:2px solid #9AA5A0;border-radius:10px;color:#111;background:#fff}
+input[type=number]{width:90px}
+input.w{width:100%}
+label.f{display:flex;flex-direction:column;font-size:15px;color:#333;gap:4px}
+.ex{border-top:1px solid #D5DBD8;padding:12px 0}
+.ex:first-of-type{border-top:none}
+.exname{font-size:19px;font-weight:700}
+.done{display:inline-block;background:#E1F5EE;color:#085041;border-radius:8px;padding:2px 8px;font-size:15px;font-weight:700;margin-left:6px}
+.hint{background:#FFF4DC;color:#5A3A00;border-radius:8px;padding:6px 10px;font-size:15px;margin:6px 0}
+.lbl{font-size:15px;color:#333;min-width:44px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #D5DBD8;display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:none;padding:10px 0 12px;font-size:16px;color:#333;font-weight:600}
+nav button .i{display:block;font-size:22px}
+nav button.on{color:#0F6E56;border-top:4px solid #0F6E56;margin-top:-2px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .h{font-size:14px;color:#333;font-weight:700}
+.cal .d{padding:8px 0;border-radius:10px;font-size:17px;background:#EEF1F0;color:#222;border:2px solid transparent}
+.cal .d.lit{background:#0F6E56;color:#fff;font-weight:700}
+.cal .d.today{border-color:#EF9F27}
+.cal .d.sel{outline:3px solid #111}
+.cal .d.e{background:none}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td,th{padding:6px 4px;border-bottom:1px solid #E1E5E3;text-align:left;vertical-align:top}
+th{font-size:15px;color:#333}
+.num{text-align:right;white-space:nowrap}
+.bad{color:#B42318;font-weight:700}
+.list-item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #E1E5E3}
+.total{font-size:22px;font-weight:800;color:#0F6E56}
+.status{font-size:15px;color:#333;margin-top:6px}
+svg.trend{width:100%;height:160px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>My Fitness</h1><div class="sub" id="hdrDate"></div></div>
+  <button class="gear" data-act="tab" data-v="settings" aria-label="設定">⚙</button>
+</header>
+<main id="app"></main>
+<nav id="nav">
+  <button data-act="tab" data-v="today"><span class="i">🏃</span>今日</button>
+  <button data-act="tab" data-v="records"><span class="i">📅</span>紀錄</button>
+  <button data-act="tab" data-v="diet"><span class="i">🥗</span>飲食</button>
+  <button data-act="tab" data-v="health"><span class="i">❤️</span>健康</button>
+</nav>
+<script>
+'use strict';
+const APP_VERSION = '1.0.0';
+const KEY = 'myfitness_db_v1';
+const KEY_GAS = 'myfitness_gas_url';
+const KEY_LOC = 'myfitness_loc';
+
+/* ---------- 日期工具 ---------- */
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => ymd(new Date());
+function addDays(s, n) { const p = s.split('-').map(Number); return ymd(new Date(p[0], p[1] - 1, p[2] + n)); }
+function diffDays(a, b) { const pa = a.split('-').map(Number), pb = b.split('-').map(Number); return Math.round((new Date(pa[0], pa[1] - 1, pa[2]) - new Date(pb[0], pb[1] - 1, pb[2])) / 86400000); }
+const WD = ['日', '一', '二', '三', '四', '五', '六'];
+function fmtDate(s) { const p = s.split('-').map(Number); return p[0] + '/' + pad(p[1]) + '/' + pad(p[2]) + '（' + WD[new Date(p[0], p[1] - 1, p[2]).getDay()] + '）'; }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => { if (v === '' || v == null) return null; const n = Number(v); return isFinite(n) ? n : null; };
+const r1 = n => Math.round(n * 10) / 10;
+
+/* ---------- 器材與動作 ---------- */
+const LOCS = { room: '房間旁', company: '公司', carry: '隨身' };
+const CARDIO = { room: ['飛輪', '跑步機', '走路'], company: ['橢圓機', '走路'], carry: ['走路'] };
+const EX = {
+  press: { name: '坐姿肩推', kind: 'db' },
+  row: { name: '站姿划船', kind: 'db' },
+  goblet: { name: '酒杯深蹲', kind: 'db' },
+  lunge: { name: '弓步蹲', kind: 'db' },
+  curl: { name: '啞鈴彎舉', kind: 'db' },
+  grip: { name: '握力器', kind: 'grip', repsLabel: '左右各' },
+  lateral: { name: '側平舉', kind: 'db', restart: 2.5 },
+  farmer: { name: '農夫走路', kind: 'db', repsLabel: '來回' },
+  pushup: { name: '伏地挺身', kind: 'bw' },
+  latpull: { name: '高位下拉（機）', kind: 'pin' },
+  chest: { name: '推胸（機）', kind: 'pin' },
+  legext: { name: '腿伸展（機）', kind: 'pin' },
+  legcurl: { name: '腿彎舉（機）', kind: 'pin' },
+  bandrow: { name: '彈力帶划船', kind: 'bw' },
+  bandfly: { name: '彈力帶擴胸', kind: 'bw' },
+  squat: { name: '徒手深蹲', kind: 'bw' }
+};
+const DEF = { room: ['press', 'row', 'goblet', 'lunge', 'curl', 'grip'], company: [], carry: ['pushup', 'bandrow', 'squat', 'grip'] };
+const EXTRA = { room: ['lateral', 'farmer', 'pushup', 'latpull', 'chest', 'legext', 'legcurl'], company: [], carry: ['bandfly'] };
+const DB_W = [2.5, 5, 7.5, 10];
+const FEEL = { easy: '輕鬆', ok: '剛好', hard: '吃力' };
+const PAIN = ['膝', '肩', '其他'];
+
+/* ---------- 初始資料 ---------- */
+function seed() {
+  const W = [];
+  const add = (date, ex, w, reps, sets, note) => W.push({ id: 'h' + W.length, date, type: 'str', ex, w, wl: w == null ? '' : 'kg', reps, sets, feel: '', pain: '', loc: 'room', hist: true, note: note || '' });
+  ['press', 'row', 'goblet', 'lunge'].forEach(e => add('2025-11-03', e, 4, 15, null));
+  add('2025-11-03', 'farmer', 4, 15, null);
+  W.push({ id: 'h' + W.length, date: '2025-11-03', type: 'str', ex: 'grip', w: 10, wl: 'kg', reps: 100, sets: null, feel: '', pain: '', loc: 'room', hist: true, note: '阻力 10 kg' });
+  add('2025-11-12', 'press', null, 20, null, '早晚各一次'); add('2025-11-12', 'row', null, 25, null, '早晚各一次');
+  add('2025-11-12', 'goblet', null, 25, null, '早晚各一次'); add('2025-11-12', 'lunge', null, 25, null, '早晚各一次');
+  add('2025-11-12', 'farmer', null, 20, null, '20 來回，約 84 m');
+  W.push({ id: 'h' + W.length, date: '2025-11-12', type: 'str', ex: 'grip', w: null, wl: '', reps: 100, sets: null, feel: '', pain: '', loc: 'room', hist: true, note: '阻力約 10–15 kg' });
+  add('2025-12-29', 'press', 5, 20, 2, '18:30–19:00'); add('2025-12-29', 'goblet', 5, 20, 2); add('2025-12-29', 'lunge', 5, 30, 2); add('2025-12-29', 'row', 5, 20, 2); add('2025-12-29', 'curl', 5, 20, 2);
+  ['press', 'row', 'goblet', 'lunge', 'curl'].forEach(e => add('2026-01-04', e, 5, 20, 2));
+  add('2026-01-23', 'press', 7.5, 20, null); add('2026-01-23', 'lateral', 5, 15, null); add('2026-01-23', 'goblet', 7.5, 20, null, '原紀錄：啞鈴深蹲');
+  add('2026-01-23', 'lunge', 7.5, 30, null); add('2026-01-23', 'row', 7.5, 20, null, '原紀錄：坐姿雙臂划船'); add('2026-01-23', 'curl', 7.5, null, null, '次數未記');
+  W.push({ id: 'h' + W.length, date: '2026-01-23', type: 'str', ex: 'grip', w: null, wl: '', reps: 100, sets: null, feel: '', pain: '', loc: 'room', hist: true, note: '阻力未記' });
+  W.push({ id: 'c1124', date: '2026-11-24', type: 'cardio', item: '飛輪', min: 15, hr: 117, loc: 'room', hist: false, note: '05:54 開始，最高心跳 128，114 大卡' });
+
+  const it = (name, amt, p, note, pMax) => ({ id: uid(), name, amt, p: p == null ? null : p, pMax: pMax == null ? null : pMax, note: note || '' });
+  const diet = [
+    { id: 's1', title: '早餐｜健康奶昔', items: [it('核桃', '25 g', 3.8), it('杏仁', '10 g', 2.1), it('南瓜子', '15 g', 4.5), it('奇亞籽', '10 g', 1.7), it('亞麻籽', '15 g', 2.7), it('黑芝麻粉', '15 g', 2.7), it('無糖燕麥片', '25 g', 3.3), it('薑黃粉', '2.5 g', null, '與保栓通的交互作用待問醫生'), it('黑胡椒', '少許', null), it('甜菜根粉', '1 包（3 g）', 0.3), it('無糖可可粉', '4 g', 0.8), it('溫開水', '550 cc', null, '1 公升果汁機攪拌')] },
+    { id: 's2', title: '早餐｜搭配', items: [it('酪梨', '半顆（180～220 g）', 2), it('蘋果', '180～220 g', 0.5, '連皮'), it('水煮蛋', '2 顆', 12.6, '公司廚房準備，到公司後吃')] },
+    { id: 's3', title: '早餐｜營養補充品', items: [it('維生素 B 群', '2 粒', null), it('Wakamoto 若元錠', '9 粒', null)] },
+    { id: 's4', title: '午後 13:00～14:00', items: [it('美式咖啡', '約 200 cc，加水到約 500 cc', 0.3), it('Cemoi 82% 黑巧克力', '2 塊（約 20 g）', 2.2, '約 120 kcal、糖 3.4 g')] },
+    { id: 's5', title: '晚餐 約 17:00', items: [it('青菜＋魚或肉', '依公司供餐', 20, '每週約 2～3 次魚；清淡無醬料；不吃白飯', 35)] },
+    { id: 's6', title: '晚間 19:00～20:00', items: [it('藍莓', '50 g', 0.4), it('希臘優格', '150 g', 12.5, 'Farmers Union，每 100 g 蛋白質 8.3 g'), it('橄欖油', '7 g', null, "Mikel's Fruit 有機特級初榨，生食；約 63 kcal"), it('奇異果', '1 顆', 1)] },
+    { id: 's7', title: '喝水', items: [it('白開水', '約 2,000 cc／日', null, '運動或天氣熱另補 300～500 cc')] },
+    { id: 's8', title: '用藥｜晚上', items: [it('保栓通 Plavix', 'Clopidogrel 75 mg，1 粒', null, '易瘀青：暫不打沙袋'), it('平脂 Zulitor', 'Pitavastatin 4 mg，1 粒', null, '無故肌肉痛／無力／尿色深 → 回診'), it('舒脈康 Sevikar', 'Amlodipine 5 mg／Olmesartan 40 mg，1 粒', null, '起身慢，運動結束前放慢')] },
+    { id: 's9', title: '醫師處方｜依醫囑', items: [it('SUPVID3 維生素 D3', '200,000 IU／支（1 ml）', null, '尚未服用；確認服用間隔前先不喝；效期 2027/06')] }
+  ];
+  const dietLog = [
+    { id: uid(), date: '2026-11-24', item: '橄欖油', from: '5 g', to: '7 g' },
+    { id: uid(), date: '2026-11-24', item: '希臘優格', from: '100 g', to: '150 g' },
+    { id: uid(), date: '', item: 'KLIM 全脂奶粉', from: '有', to: '取消' },
+    { id: uid(), date: '', item: '枸杞', from: '有', to: '取消' }
+  ];
+  const notes = [
+    { id: uid(), text: '奶昔中的薑黃（2.5 g/日）與保栓通一起使用是否沒問題', done: '' },
+    { id: uid(), text: '告知醫生已重新開始規律運動，確認強度有無限制', done: '' },
+    { id: uid(), text: 'SUPVID3 的服用間隔', done: '' },
+    { id: uid(), text: '健檢加驗：腎功能（肌酸酐／eGFR）、血鉀、維生素 D、血鈣', done: '' }
+  ];
+  return { meta: { app: 'myfitness', updatedAt: 0, seededAt: today() }, workouts: W, monthly: [], diet, dietLog, notes };
+}
+
+function normalize(d) {
+  if (!d || typeof d !== 'object') return null;
+  d.meta = d.meta || { updatedAt: 0 };
+  ['workouts', 'monthly', 'diet', 'dietLog', 'notes'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  return d;
+}
+function load() { try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
+let DB = load() || seed();
+function persist() { localStorage.setItem(KEY, JSON.stringify(DB)); }
+function save() { DB.meta.updatedAt = Date.now(); persist(); scheduleSync(); }
+persist();
+
+/* ---------- 計算 ---------- */
+function entriesOn(date) { return DB.workouts.filter(w => w.date === date); }
+function isLit(date) {
+  const es = entriesOn(date);
+  const mins = es.filter(e => e.type === 'cardio').reduce((s, e) => s + (e.min || 0), 0);
+  return mins >= 10 || es.some(e => e.type === 'str');
+}
+function litDates() { const s = new Set(); DB.workouts.forEach(w => { if (isLit(w.date)) s.add(w.date); }); return s; }
+function streak() {
+  const lit = litDates(); let d = today(); if (!lit.has(d)) d = addDays(d, -1);
+  let n = 0; while (lit.has(d)) { n++; d = addDays(d, -1); } return n;
+}
+function daysSinceLit() {
+  const t = today(); let best = null;
+  litDates().forEach(d => { if (d <= t && (!best || d > best)) best = d; });
+  return best ? diffDays(t, best) : null;
+}
+function exRecords(ex) { return DB.workouts.filter(w => w.type === 'str' && w.ex === ex).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0); }
+function lastBefore(ex, date) { const r = exRecords(ex).filter(w => w.date < date); return r.length ? r[r.length - 1] : null; }
+function maxRec(ex) { let m = null; exRecords(ex).forEach(w => { if (w.w != null && w.wl === 'kg' && (!m || w.w > m.w)) m = w; }); return m; }
+function fmtW(e) { if (!e || e.w == null) return ''; return e.wl === '格' ? '第 ' + e.w + ' 格' : e.w + ' kg'; }
+function fmtStr(e) {
+  const parts = []; const w = fmtW(e); if (w) parts.push(w);
+  const lab = (EX[e.ex] && EX[e.ex].repsLabel) || '';
+  if (e.reps != null) parts.push((lab === '左右各' ? '左右各 ' : '') + e.reps + (lab === '來回' ? ' 來回' : ' 下'));
+  if (e.sets) parts.push(e.sets + ' 組');
+  return parts.join(' × ') || '—';
+}
+function upgradeHint(ex) {
+  const r = exRecords(ex).filter(w => !w.hist);
+  if (r.length < 2) return '';
+  const a = r[r.length - 1], b = r[r.length - 2];
+  if (a.w != null && a.w === b.w && a.feel === 'easy' && b.feel === 'easy' && !a.pain && !b.pain) return '連續兩次都覺得輕鬆，可以考慮換下一個重量（由你決定）';
+  return '';
+}
+function proteinTotal() {
+  let lo = 0, hi = 0;
+  DB.diet.forEach(s => s.items.forEach(i => { if (i.p != null) { lo += i.p; hi += (i.pMax != null ? i.pMax : i.p); } }));
+  return [r1(lo), r1(hi)];
+}
+
+/* ---------- 介面狀態 ---------- */
+const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: '', cardioHr: '', tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
+{ const t = new Date(); UI.calY = t.getFullYear(); UI.calM = t.getMonth(); UI.selDay = today(); }
+
+function tmpFor(ex) {
+  if (UI.tmp[ex]) return UI.tmp[ex];
+  const last = lastBefore(ex, addDays(today(), 1));
+  const def = EX[ex];
+  let w = last ? last.w : null;
+  if (def.kind === 'db') { if (!last || last.hist || w == null) w = def.restart || 5; }
+  if (def.kind === 'bw') w = null;
+  UI.tmp[ex] = { w, reps: last && last.reps != null ? last.reps : (def.kind === 'grip' ? 100 : 20), sets: last && last.sets ? last.sets : 1, feel: '', pain: '' };
+  return UI.tmp[ex];
+}
+
+/* ---------- 畫面 ---------- */
+function render() {
+  document.getElementById('hdrDate').textContent = fmtDate(today()) + '　v' + APP_VERSION;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === UI.tab));
+  const el = document.getElementById('app');
+  el.innerHTML = ({ today: vToday, records: vRecords, diet: vDiet, health: vHealth, settings: vSettings }[UI.tab])();
+}
+
+function vToday() {
+  const t = today(), lit = isLit(t), ds = daysSinceLit(), st = streak();
+  let banner;
+  if (lit) banner = '<div class="banner b-ok">今天已經亮了 ✓　連續 ' + st + ' 天</div>';
+  else if (ds == null || ds >= 2) banner = '<div class="banner b-warn">' + (ds == null ? '還沒有運動紀錄' : '已經 ' + ds + ' 天沒運動了') + '<div class="small" style="color:#7A1414">今天動 10 分鐘就好</div></div>';
+  else banner = '<div class="banner b-todo">今天還沒亮，10 分鐘就算數' + (st ? '<div class="small">目前連續 ' + st + ' 天</div>' : '') + '</div>';
+
+  const locs = '<div class="card"><div class="row">' + Object.keys(LOCS).map(k => '<button class="chip' + (UI.loc === k ? ' on' : '') + '" data-act="loc" data-v="' + k + '">📍' + LOCS[k] + '</button>').join('') + '</div></div>';
+
+  const items = CARDIO[UI.loc];
+  if (!items.includes(UI.cardio)) UI.cardio = items[0];
+  const todayCardio = entriesOn(t).filter(e => e.type === 'cardio');
+  const cardio = '<div class="card"><h2>有氧</h2><div class="row">' + items.map(i => '<button class="chip' + (UI.cardio === i ? ' on' : '') + '" data-act="cardioItem" data-v="' + esc(i) + '">' + esc(i) + '</button>').join('') + '</div>' +
+    '<div class="row" style="margin-top:10px"><label class="f">分鐘<input type="number" inputmode="numeric" data-in="cardioMin" value="' + esc(UI.cardioMin) + '" placeholder="15"></label>' +
+    '<label class="f">平均心跳（選填）<input type="number" inputmode="numeric" data-in="cardioHr" value="' + esc(UI.cardioHr) + '"></label>' +
+    '<button class="btn pri" data-act="saveCardio" style="align-self:flex-end">記錄</button></div>' +
+    (todayCardio.length ? '<div class="status">今天：' + todayCardio.map(e => esc(e.item) + ' ' + e.min + ' 分' + (e.hr ? '（心跳 ' + e.hr + '）' : '')).join('、') + '</div>' : '') + '</div>';
+
+  let str = '';
+  const defs = DEF[UI.loc], extras = EXTRA[UI.loc];
+  if (defs.length || extras.length) {
+    str = '<div class="card"><h2>重訓' + (UI.loc === 'room' ? '｜預設循環' : '') + '</h2>' +
+      (UI.loc === 'room' ? '<div class="muted">狀態好做 2 循環，狀態差做 1 循環；做 1 循環也算有亮。</div>' : '') +
+      defs.map(exRow).join('') +
+      (extras.length ? '<div style="margin-top:8px"><button class="btn sm" data-act="toggleExtra">' + (UI.showExtra ? '收起加做動作 ▲' : '加做動作 ▼') + '</button></div>' + (UI.showExtra ? extras.map(exRow).join('') : '') : '') + '</div>';
+  } else {
+    str = '<div class="card"><h2>重訓</h2><div class="muted">這個地點沒有重訓器材。</div></div>';
+  }
+  return banner + locs + cardio + str;
+}
+
+function exRow(ex) {
+  const d = EX[ex], tp = tmpFor(ex), t = today();
+  const last = lastBefore(ex, t), mx = maxRec(ex);
+  const done = entriesOn(t).filter(e => e.type === 'str' && e.ex === ex);
+  const hint = upgradeHint(ex);
+  let wCtl = '';
+  if (d.kind === 'db') {
+    wCtl = '<div class="row" style="margin-top:6px"><span class="lbl">重量</span>' + DB_W.map(w => '<button class="chip' + (tp.w === w ? ' on' : '') + '" data-act="tmp" data-ex="' + ex + '" data-f="w" data-v="' + w + '">' + w + '</button>').join('') +
+      '<input type="number" inputmode="decimal" step="0.5" data-tmp="' + ex + ':w" value="' + (tp.w != null && !DB_W.includes(tp.w) ? tp.w : '') + '" placeholder="自訂" style="width:80px"> kg</div>';
+  } else if (d.kind === 'pin') {
+    wCtl = '<div class="row" style="margin-top:6px"><span class="lbl">插銷</span>第 <input type="number" inputmode="numeric" data-tmp="' + ex + ':w" value="' + (tp.w != null ? tp.w : '') + '"> 格</div>';
+  } else if (d.kind === 'grip') {
+    wCtl = '<div class="row" style="margin-top:6px"><span class="lbl">阻力</span><input type="number" inputmode="decimal" data-tmp="' + ex + ':w" value="' + (tp.w != null ? tp.w : '') + '" placeholder="選填"> kg</div>';
+  }
+  const repsLab = d.repsLabel === '左右各' ? '左右各' : (d.repsLabel === '來回' ? '來回' : '次數');
+  const plan = fmtStr({ ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets });
+  const head = '<div class="ex"><div><span class="exname">' + esc(d.name) + '</span>' +
+    done.map(e => '<span class="done">✓ ' + esc(fmtStr(e)) + '</span>').join('') + '</div>' +
+    '<div class="muted">上次：' + (last ? esc(fmtStr(last)) + '（' + last.date.slice(5).replace('-', '/') + (last.hist ? '，歷史' : '') + '）' : '無') +
+    (mx ? '　歷史最高：' + mx.w + ' kg' : '') + '</div>' +
+    (hint ? '<div class="hint">' + hint + '</div>' : '');
+  if (!UI.open[ex]) {
+    return head + '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="saveStr" data-ex="' + ex + '">完成：' + esc(plan) + '</button><button class="btn" data-act="openEx" data-ex="' + ex + '">調整</button></div></div>';
+  }
+  return head +
+    wCtl +
+    '<div class="row" style="margin-top:6px"><span class="lbl">' + repsLab + '</span><input type="number" inputmode="numeric" data-tmp="' + ex + ':reps" value="' + (tp.reps != null ? tp.reps : '') + '">' +
+    '<span class="lbl" style="margin-left:6px">組數</span>' + [1, 2, 3].map(n => '<button class="chip' + (tp.sets === n ? ' on' : '') + '" data-act="tmp" data-ex="' + ex + '" data-f="sets" data-v="' + n + '">' + n + '</button>').join('') + '</div>' +
+    '<div class="row" style="margin-top:6px"><span class="lbl">感覺</span>' + Object.keys(FEEL).map(k => '<button class="chip' + (tp.feel === k ? ' on' : '') + '" data-act="tmp" data-ex="' + ex + '" data-f="feel" data-v="' + k + '">' + FEEL[k] + '</button>').join('') + '</div>' +
+    '<div class="row" style="margin-top:6px"><span class="lbl">不適</span>' + PAIN.map(p => '<button class="chip' + (tp.pain === p ? ' on' : '') + '" data-act="tmp" data-ex="' + ex + '" data-f="pain" data-v="' + p + '">' + p + '</button>').join('') + '</div>' +
+    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="saveStr" data-ex="' + ex + '">完成，記錄</button><button class="btn" data-act="openEx" data-ex="' + ex + '">收起</button></div></div>';
+}
+
+function vRecords() {
+  const y = UI.calY, m = UI.calM, first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+  const lit = litDates(), t = today();
+  let cells = WD.map(w => '<div class="h">' + w + '</div>').join('');
+  for (let i = 0; i < first.getDay(); i++) cells += '<div class="d e"></div>';
+  let litCount = 0;
+  for (let d = 1; d <= days; d++) {
+    const ds = y + '-' + pad(m + 1) + '-' + pad(d);
+    if (lit.has(ds)) litCount++;
+    cells += '<div class="d' + (lit.has(ds) ? ' lit' : '') + (ds === t ? ' today' : '') + (ds === UI.selDay ? ' sel' : '') + '" data-act="selDay" data-v="' + ds + '">' + d + '</div>';
+  }
+  const cal = '<div class="card"><div class="row" style="justify-content:space-between"><button class="btn sm" data-act="mon" data-v="-1">‹ 上月</button><b>' + y + ' 年 ' + (m + 1) + ' 月</b><button class="btn sm" data-act="mon" data-v="1">下月 ›</button></div>' +
+    '<div class="status">本月亮了 ' + litCount + ' 天</div><div class="cal" style="margin-top:8px">' + cells + '</div></div>';
+
+  const es = entriesOn(UI.selDay);
+  const day = '<div class="card"><h2>' + fmtDate(UI.selDay) + (isLit(UI.selDay) ? '　✓ 有亮' : '') + '</h2>' +
+    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? '有氧｜' + esc(e.item) + ' ' + e.min + ' 分' + (e.hr ? '，心跳 ' + e.hr : '') : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
+      (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
+
+  const exIds = Object.keys(EX).filter(k => exRecords(k).length);
+  if (!exIds.includes(UI.selEx) && exIds.length) UI.selEx = exIds[0];
+  let exCard = '';
+  if (exIds.length) {
+    const recs = exRecords(UI.selEx), mx = maxRec(UI.selEx), lastE = lastBefore(UI.selEx, t), todayE = recs.filter(r => r.date === t);
+    exCard = '<div class="card"><h2>動作進度</h2><select data-in="selEx" class="w">' + exIds.map(k => '<option value="' + k + '"' + (k === UI.selEx ? ' selected' : '') + '>' + esc(EX[k].name) + '</option>').join('') + '</select>' +
+      '<table style="margin-top:8px"><tr><th>歷史最高</th><td>' + (mx ? mx.w + ' kg（' + mx.date + '）' : '—') + '</td></tr>' +
+      '<tr><th>上次</th><td>' + (lastE ? esc(fmtStr(lastE)) + '（' + lastE.date + '）' : '—') + '</td></tr>' +
+      '<tr><th>今天</th><td>' + (todayE.length ? todayE.map(r => esc(fmtStr(r))).join('、') : '—') + '</td></tr></table>' + trend(recs) + '</div>';
+  }
+  return cal + day + exCard;
+}
+
+function trend(recs) {
+  const byDate = {};
+  recs.forEach(r => { if (r.w != null && r.wl === 'kg') byDate[r.date] = Math.max(byDate[r.date] || 0, r.w); });
+  const ds = Object.keys(byDate).sort();
+  if (ds.length < 2) return '<div class="muted" style="margin-top:8px">累積 2 次以上有重量的紀錄後，會顯示重量趨勢。</div>';
+  const W = 340, H = 150, L = 34, R = 10, T = 12, B = 26;
+  const vals = ds.map(d => byDate[d]), mx = Math.max.apply(null, vals.concat([10]));
+  const x = i => L + (W - L - R) * (ds.length === 1 ? 0.5 : i / (ds.length - 1));
+  const yv = v => T + (H - T - B) * (1 - v / mx);
+  const pts = ds.map((d, i) => x(i).toFixed(1) + ',' + yv(byDate[d]).toFixed(1)).join(' ');
+  let g = '';
+  [0, mx / 2, mx].forEach(v => { g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yv(v) + '" y2="' + yv(v) + '" stroke="#D5DBD8"/><text x="2" y="' + (yv(v) + 5) + '" font-size="12" fill="#333">' + r1(v) + '</text>'; });
+  const dots = ds.map((d, i) => '<circle cx="' + x(i) + '" cy="' + yv(byDate[d]) + '" r="4" fill="#0F6E56"/>').join('');
+  const lbl = '<text x="' + L + '" y="' + (H - 6) + '" font-size="12" fill="#333">' + ds[0] + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" font-size="12" fill="#333" text-anchor="end">' + ds[ds.length - 1] + '</text>';
+  return '<div class="muted" style="margin-top:8px">每次最高重量（kg）</div><svg class="trend" viewBox="0 0 ' + W + ' ' + H + '">' + g + '<polyline points="' + pts + '" fill="none" stroke="#0F6E56" stroke-width="3"/>' + dots + lbl + '</svg>';
+}
+
+function vDiet() {
+  const pt = proteinTotal();
+  let h = '<div class="card"><h2>每日飲食基準</h2><div>每日蛋白質估計</div><div class="total">' + pt[0] + '～' + pt[1] + ' g</div><div class="muted">只做紀錄，不用每天打勾。有變動時按「編輯」修改，會自動留下變更紀錄。</div></div>';
+  DB.diet.forEach(s => {
+    const ed = UI.editSec === s.id;
+    h += '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">' + esc(s.title) + '</h2>' +
+      (ed ? '<div class="row"><button class="btn sm pri" data-act="saveSec" data-v="' + s.id + '">儲存</button><button class="btn sm" data-act="cancelSec">取消</button></div>' : '<button class="btn sm" data-act="editSec" data-v="' + s.id + '">編輯</button>') + '</div>';
+    if (ed) {
+      h += s.items.map(i => '<div class="ex" data-item="' + i.id + '"><input class="w" data-f="name" value="' + esc(i.name) + '" placeholder="名稱">' +
+        '<div class="row" style="margin-top:6px"><input data-f="amt" value="' + esc(i.amt) + '" placeholder="份量" style="flex:1">' +
+        '<input data-f="p" value="' + (i.p != null ? i.p + (i.pMax != null ? '-' + i.pMax : '') : '') + '" placeholder="蛋白質 g" style="width:110px"></div>' +
+        '<input class="w" data-f="note" value="' + esc(i.note) + '" placeholder="備註" style="margin-top:6px">' +
+        '<div style="margin-top:6px"><label class="small"><input type="checkbox" data-f="del" style="width:auto"> 取消這一項</label></div></div>').join('') +
+        '<div class="ex" data-item="new"><div class="muted">新增一項（選填）</div><input class="w" data-f="name" placeholder="名稱"><div class="row" style="margin-top:6px"><input data-f="amt" placeholder="份量" style="flex:1"><input data-f="p" placeholder="蛋白質 g" style="width:110px"></div><input class="w" data-f="note" placeholder="備註" style="margin-top:6px"></div>';
+    } else {
+      h += '<table>' + s.items.map(i => '<tr><td><b>' + esc(i.name) + '</b>' + (i.note ? '<div class="muted">' + esc(i.note) + '</div>' : '') + '</td><td>' + esc(i.amt) + '</td><td class="num">' + (i.p != null ? (i.pMax != null ? i.p + '～' + i.pMax : i.p) + ' g' : '') + '</td></tr>').join('') + '</table>';
+    }
+    h += '</div>';
+  });
+  const log = DB.dietLog.slice().sort((a, b) => (b.date || '') < (a.date || '') ? -1 : (b.date || '') > (a.date || '') ? 1 : 0);
+  h += '<div class="card"><h2>變更紀錄</h2>' + (log.length ? '<table><tr><th>日期</th><th>項目</th><th>變更</th></tr>' + log.map(l => '<tr><td>' + esc(l.date || '—') + '</td><td>' + esc(l.item) + '</td><td>' + esc(l.from) + ' → ' + esc(l.to) + '</td></tr>').join('') + '</table>' : '<div class="muted">尚無變更。</div>') + '</div>';
+  return h;
+}
+
+function parseP(v) {
+  const s = String(v || '').trim(); if (!s) return [null, null];
+  const m = s.split(/[-～~]/).map(x => num(x.trim()));
+  return [m[0], m.length > 1 ? m[1] : null];
+}
+
+function vHealth() {
+  const rows = DB.monthly.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+  let h = '<div class="card"><h2>每月自我檢測</h2>' +
+    '<div class="muted">男性篩檢參考（AWGS 2019）：小腿圍 &lt;34 cm、坐站 5 次 ≥12 秒、握力 &lt;28 kg（需電子握力計）。這是篩檢，不是診斷。</div>' +
+    '<div class="row" style="margin-top:10px"><label class="f">日期<input type="date" data-in="mDate" value="' + today() + '"></label>' +
+    '<label class="f">小腿圍 cm<input type="number" inputmode="decimal" step="0.1" data-in="mCalf"></label>' +
+    '<label class="f">坐站 5 次 秒<input type="number" inputmode="decimal" step="0.1" data-in="mSit"></label>' +
+    '<label class="f">握力 kg（選填）<input type="number" inputmode="decimal" step="0.1" data-in="mGrip"></label></div>' +
+    '<div style="margin-top:8px"><button class="btn pri" data-act="saveMonthly">記錄</button></div>' +
+    (rows.length ? '<table style="margin-top:10px"><tr><th>日期</th><th class="num">小腿圍</th><th class="num">坐站</th><th class="num">握力</th><th></th></tr>' + rows.map(r => '<tr><td>' + r.date + '</td>' +
+      '<td class="num' + (r.calf != null && r.calf < 34 ? ' bad' : '') + '">' + (r.calf != null ? r.calf : '—') + '</td>' +
+      '<td class="num' + (r.sit != null && r.sit >= 12 ? ' bad' : '') + '">' + (r.sit != null ? r.sit + ' 秒' : '—') + '</td>' +
+      '<td class="num' + (r.grip != null && r.grip < 28 ? ' bad' : '') + '">' + (r.grip != null ? r.grip : '—') + '</td>' +
+      '<td><button class="btn sm warn" data-act="delM" data-v="' + r.id + '">刪</button></td></tr>').join('') + '</table>' : '<div class="status">還沒有檢測紀錄，每月量一次就好。</div>') + '</div>';
+  const open = DB.notes.filter(n => !n.done), done = DB.notes.filter(n => n.done);
+  h += '<div class="card"><h2>待問醫生</h2>' + open.map(n => '<div class="list-item"><div>' + esc(n.text) + '</div><button class="btn sm" data-act="noteDone" data-v="' + n.id + '">已問</button></div>').join('') +
+    '<div class="row" style="margin-top:8px"><input data-in="noteText" placeholder="新增要問的事" style="flex:1"><button class="btn pri" data-act="addNote">新增</button></div>' +
+    (done.length ? '<div class="muted" style="margin-top:10px">已問過：</div>' + done.map(n => '<div class="list-item"><div class="muted">' + esc(n.text) + '（' + esc(n.done) + '）</div><button class="btn sm warn" data-act="delNote" data-v="' + n.id + '">刪</button></div>').join('') : '') + '</div>';
+  return h;
+}
+
+function vSettings() {
+  const url = localStorage.getItem(KEY_GAS) || '';
+  return '<div class="card"><h2>Google Sheets 同步</h2><label class="f">Apps Script 網址（/exec 結尾）<input class="w" data-in="gasUrl" value="' + esc(url) + '" placeholder="https://script.google.com/macros/s/.../exec"></label>' +
+    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="saveGas">儲存網址</button><button class="btn" data-act="syncNow">立即同步</button></div>' +
+    '<div class="status">' + esc(UI.syncMsg || (url ? '已設定' : '尚未設定，資料只存在這支手機')) + '</div>' +
+    '<div class="muted" style="margin-top:6px">開啟 App 時會比對雲端；雲端較新就下載，否則上傳。每次記錄後也會自動上傳。</div></div>' +
+    '<div class="card"><h2>備份</h2><div class="row"><button class="btn" data-act="export">下載備份 JSON</button><label class="btn">匯入備份<input type="file" accept=".json,application/json" data-in="importFile" style="display:none"></label></div></div>' +
+    '<div class="card"><h2>關於</h2><div>My Fitness v' + APP_VERSION + '</div><div class="muted">資料最後更新：' + (DB.meta.updatedAt ? new Date(DB.meta.updatedAt).toLocaleString() : '—') + '</div></div>';
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, v = b.dataset.v;
+  const t = today();
+  switch (a) {
+    case 'tab': UI.tab = v; window.scrollTo(0, 0); break;
+    case 'loc': UI.loc = v; localStorage.setItem(KEY_LOC, v); break;
+    case 'cardioItem': UI.cardio = v; break;
+    case 'saveCardio': {
+      const m = num(UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
+      DB.workouts.push({ id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' });
+      UI.cardioMin = ''; UI.cardioHr = ''; save(); break;
+    }
+    case 'toggleExtra': UI.showExtra = !UI.showExtra; break;
+    case 'openEx': UI.open[b.dataset.ex] = !UI.open[b.dataset.ex]; break;
+    case 'tmp': {
+      const tp = tmpFor(b.dataset.ex), f = b.dataset.f;
+      let val = (f === 'w' || f === 'sets') ? Number(v) : v;
+      if ((f === 'feel' || f === 'pain') && tp[f] === val) val = '';
+      tp[f] = val; break;
+    }
+    case 'saveStr': {
+      const ex = b.dataset.ex, tp = tmpFor(ex), d = EX[ex];
+      DB.workouts.push({ id: uid(), date: t, type: 'str', ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (d.kind === 'bw' || tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets, feel: tp.feel, pain: tp.pain, loc: UI.loc, hist: false, note: '' });
+      tp.feel = ''; tp.pain = ''; UI.open[ex] = false; save(); break;
+    }
+    case 'mon': { let m = UI.calM + Number(v), y = UI.calY; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } UI.calM = m; UI.calY = y; break; }
+    case 'selDay': UI.selDay = v; break;
+    case 'delW': if (!confirm('刪除這筆紀錄？')) return; DB.workouts = DB.workouts.filter(w => w.id !== v); save(); break;
+    case 'editSec': UI.editSec = v; break;
+    case 'cancelSec': UI.editSec = null; break;
+    case 'saveSec': saveSection(v); break;
+    case 'saveMonthly': {
+      const g = s => document.querySelector('[data-in="' + s + '"]');
+      const rec = { id: uid(), date: g('mDate').value || t, calf: num(g('mCalf').value), sit: num(g('mSit').value), grip: num(g('mGrip').value) };
+      if (rec.calf == null && rec.sit == null && rec.grip == null) { alert('請至少填一項'); return; }
+      DB.monthly.push(rec); save(); break;
+    }
+    case 'delM': if (!confirm('刪除這筆檢測？')) return; DB.monthly = DB.monthly.filter(r => r.id !== v); save(); break;
+    case 'addNote': { const i = document.querySelector('[data-in="noteText"]'); if (!i.value.trim()) return; DB.notes.push({ id: uid(), text: i.value.trim(), done: '' }); save(); break; }
+    case 'noteDone': { const n = DB.notes.find(x => x.id === v); if (n) n.done = t; save(); break; }
+    case 'delNote': DB.notes = DB.notes.filter(x => x.id !== v); save(); break;
+    case 'saveGas': { const i = document.querySelector('[data-in="gasUrl"]'); localStorage.setItem(KEY_GAS, i.value.trim()); UI.syncMsg = '網址已儲存'; render(); syncNow(); return; }
+    case 'syncNow': syncNow(); return;
+    case 'export': exportJson(); return;
+    default: return;
+  }
+  render();
+});
+
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if (el.dataset.tmp) { const p = el.dataset.tmp.split(':'); const tp = tmpFor(p[0]); tp[p[1]] = num(el.value); if (p[1] === 'w' && el.value === '') tp.w = null; return; }
+  if (el.dataset.in === 'cardioMin') UI.cardioMin = el.value;
+  if (el.dataset.in === 'cardioHr') UI.cardioHr = el.value;
+});
+document.addEventListener('change', ev => {
+  const el = ev.target;
+  if (el.dataset.in === 'selEx') { UI.selEx = el.value; render(); }
+  if (el.dataset.in === 'importFile' && el.files[0]) importJson(el.files[0]);
+});
+
+function saveSection(id) {
+  const s = DB.diet.find(x => x.id === id); if (!s) return;
+  const t = today(), kept = [];
+  document.querySelectorAll('[data-item]').forEach(box => {
+    const f = n => { const e = box.querySelector('[data-f="' + n + '"]'); return e ? (e.type === 'checkbox' ? e.checked : e.value.trim()) : ''; };
+    const iid = box.dataset.item;
+    if (iid === 'new') {
+      if (!f('name')) return;
+      const pp = parseP(f('p'));
+      kept.push({ id: uid(), name: f('name'), amt: f('amt'), p: pp[0], pMax: pp[1], note: f('note') });
+      DB.dietLog.push({ id: uid(), date: t, item: f('name'), from: '無', to: '新增 ' + f('amt') });
+      return;
+    }
+    const it = s.items.find(x => x.id === iid); if (!it) return;
+    if (f('del')) { DB.dietLog.push({ id: uid(), date: t, item: it.name, from: it.amt || '有', to: '取消' }); return; }
+    if (f('amt') !== it.amt) DB.dietLog.push({ id: uid(), date: t, item: f('name') || it.name, from: it.amt, to: f('amt') });
+    const pp = parseP(f('p'));
+    kept.push({ id: it.id, name: f('name') || it.name, amt: f('amt'), p: pp[0], pMax: pp[1], note: f('note') });
+  });
+  s.items = kept; UI.editSec = null; save(); render();
+}
+
+function exportJson() {
+  const blob = new Blob([JSON.stringify(DB, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'myfitness-backup-' + today() + '.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importJson(file) {
+  const r = new FileReader();
+  r.onload = () => { try { const d = normalize(JSON.parse(r.result)); if (!d || !d.workouts) throw new Error('格式不符'); if (!confirm('用這個備份取代目前資料？')) return; DB = d; save(); render(); alert('已匯入'); } catch (e) { alert('匯入失敗：' + e.message); } };
+  r.readAsText(file);
+}
+
+/* ---------- Google Sheets 同步 ---------- */
+let syncTimer = null;
+function scheduleSync() { if (!localStorage.getItem(KEY_GAS)) return; clearTimeout(syncTimer); syncTimer = setTimeout(push, 1500); }
+function setMsg(m) { UI.syncMsg = m; if (UI.tab === 'settings') render(); }
+async function push() {
+  const url = localStorage.getItem(KEY_GAS); if (!url) return;
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'save', data: DB }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || '儲存失敗');
+    setMsg('已上傳 ' + new Date().toLocaleTimeString());
+  } catch (e) { setMsg('上傳失敗：' + e.message); }
+}
+async function syncNow() {
+  const url = localStorage.getItem(KEY_GAS); if (!url) { setMsg('尚未設定網址'); return; }
+  setMsg('同步中…');
+  try {
+    const r = await fetch(url + (url.includes('?') ? '&' : '?') + 'action=get&t=' + Date.now());
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || '讀取失敗');
+    const remote = normalize(j.data);
+    if (remote && remote.meta && remote.meta.updatedAt > (DB.meta.updatedAt || 0) && remote.workouts.length) {
+      DB = remote; persist(); UI.tmp = {}; render(); setMsg('已從雲端下載 ' + new Date().toLocaleTimeString());
+    } else { await push(); }
+  } catch (e) { setMsg('同步失敗：' + e.message); }
+}
+
+/* ---------- 啟動 ---------- */
+render();
+if (localStorage.getItem(KEY_GAS)) syncNow();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
