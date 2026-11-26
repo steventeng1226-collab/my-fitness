@@ -84,7 +84,7 @@ svg.trend{width:100%;height:150px}
 </nav>
 <script>
 'use strict';
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const KEY_CLD_NAME = 'cloudinary_name';
 const KEY_CLD_PRESET = 'cloudinary_preset';
 const KB_CARDIO = ['飛輪', '跑步機', '橢圓機', '走路'];
@@ -187,6 +187,12 @@ function normalize(d) {
   d.meta = d.meta || { updatedAt: 0 };
   ['workouts', 'monthly', 'diet', 'dietLog', 'notes'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   if (!d.kb || typeof d.kb !== 'object' || Array.isArray(d.kb)) d.kb = {};
+  d.workouts.forEach(w => {
+    if (w.type === 'str' && !w.sid && w.note === '舉重時記錄') {
+      const ses = d.workouts.find(x => x.type === 'cardio' && x.item === '舉重' && x.date === w.date);
+      if (ses) { w.sid = ses.id; w.note = ''; }
+    }
+  });
   const seen = new Set();
   d.workouts = d.workouts.filter(w => {
     if (w.type !== 'cardio' || !w.start) return true;
@@ -244,7 +250,7 @@ function proteinTotal() {
 }
 
 /* ---------- 介面狀態 ---------- */
-const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', kbSel: null, kbMsg: '', pick: null, scan: null, scanMsg: '', showRaw: false, undo: null, tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
+const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', kbSel: null, kbMsg: '', pick: null, delOpen: null, scan: null, scanMsg: '', showRaw: false, undo: null, tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
 { const t = new Date(); UI.calY = t.getFullYear(); UI.calM = t.getMonth(); UI.selDay = today(); }
 
 function tmpFor(ex) {
@@ -347,9 +353,21 @@ function vRecords() {
     '<div class="status">本月亮了 ' + litCount + ' 天</div><div class="cal" style="margin-top:8px">' + cells + '</div></div>';
 
   const es = entriesOn(UI.selDay);
+  const strLine = e => esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '　' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '') + (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '');
+  const child = e => '<div data-act="toggleDel" data-v="' + e.id + '" style="padding:3px 0 3px 12px;cursor:pointer">・' + strLine(e) +
+    (UI.delOpen === e.id ? ' <button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除這個動作</button>' : '') + '</div>';
+  const blocks = [];
+  es.filter(e => e.type === 'cardio').forEach(e => {
+    const kids = e.item === '舉重' ? es.filter(k => k.type === 'str' && k.sid === e.id) : [];
+    blocks.push('<div class="list-item" style="flex-direction:column;align-items:stretch"><div><b>' + (e.item === '舉重' ? '' : '有氧｜') + esc(cardioText(e)) + '</b>' + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div>' +
+      kids.map(child).join('') +
+      '<div class="row" style="margin-top:4px;justify-content:flex-end">' + (e.item === '舉重' ? '<button class="btn sm" data-act="pickOpen" data-v="' + e.date + '" data-sid="' + e.id + '">補記動作</button>' : '') +
+      '<button class="btn sm warn" data-act="delSes" data-v="' + e.id + '">' + (kids.length ? '刪除整筆' : '刪除') + '</button></div></div>');
+  });
+  const lone = es.filter(e => e.type === 'str' && !(e.sid && es.some(x => x.id === e.sid)));
+  if (lone.length) blocks.push('<div class="list-item" style="flex-direction:column;align-items:stretch"><div><b>重訓動作</b></div>' + lone.map(child).join('') + '</div>');
   const day = '<div class="card"><h2>' + fmtDate(UI.selDay) + (isLit(UI.selDay) ? '　✓ 有亮' : '') + '</h2>' +
-    (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? (e.item === '舉重' ? '舉重｜' : '有氧｜') + esc(cardioText(e)) : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
-      (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><div class="row" style="flex-direction:column;gap:4px">' + (e.type === 'cardio' && e.item === '舉重' ? '<button class="btn sm" data-act="pickOpen" data-v="' + e.date + '">補記動作</button>' : '') + '<button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
+    (blocks.length ? blocks.join('') : '<div class="muted">這天沒有紀錄。</div>') + '<div class="muted" style="margin-top:4px">點動作可以刪除單一動作。</div></div>';
 
   const exIds = Object.keys(EX).filter(k => exRecords(k).length);
   if (!exIds.includes(UI.selEx) && exIds.length) UI.selEx = exIds[0];
@@ -598,10 +616,10 @@ async function scanImage(fileList) {
 function recentDup(pred) { const now = Date.now(); return DB.workouts.find(w => w.ts && now - w.ts < DUP_MS && pred(w)); }
 function addEntry(e, text) { e.ts = Date.now(); DB.workouts.push(e); UI.undo = { ids: [e.id], text }; save(); }
 const PICK_EX = DEF.room.concat(EXTRA.room);
-function openPick(date) {
+function openPick(date, sid) {
   const items = {};
   PICK_EX.forEach(ex => { const tp = tmpFor(ex); items[ex] = { on: false, w: EX[ex].kind === 'bw' ? null : tp.w, reps: tp.reps, sets: tp.sets || 1 }; });
-  UI.pick = { date, items };
+  UI.pick = { date, sid: sid || null, items };
 }
 function pickCard() {
   if (!UI.pick) return '';
@@ -626,7 +644,7 @@ function pickSave() {
     const it = P.items[ex], d = EX[ex];
     if (!it.on || DB.workouts.some(w => w.type === 'str' && w.date === P.date && w.ex === ex)) return;
     const w = d.kind === 'bw' ? null : num(it.w);
-    const e = { id: uid(), ts: Date.now(), date: P.date, type: 'str', ex, w, wl: d.kind === 'pin' ? '格' : (w == null ? '' : 'kg'), reps: num(it.reps), sets: num(it.sets) || 1, feel: '', pain: '', loc: 'room', hist: false, note: '舉重時記錄' };
+    const e = { id: uid(), ts: Date.now(), date: P.date, type: 'str', ex, w, wl: d.kind === 'pin' ? '格' : (w == null ? '' : 'kg'), reps: num(it.reps), sets: num(it.sets) || 1, feel: '', pain: '', loc: 'room', hist: false, note: '', sid: P.sid || undefined };
     DB.workouts.push(e); ids.push(e.id); names.push(d.name);
     if (P.date === today()) UI.tmp[ex] = null;
   });
@@ -641,7 +659,7 @@ function scanSave() {
   const e = { id: uid(), date: s.date || today(), type: 'cardio', item: s.item || '其他', min: m, sec: num(s.sec), start: s.start || '', hr: num(s.hr), maxHr: num(s.maxHr), kcal: num(s.kcal), loc, hist: false, note: '' };
   UI.scan = null; UI.showRaw = false; UI.scanMsg = '';
   addEntry(e, (e.date !== today() ? e.date + ' ' : '') + cardioText(e));
-  if (e.item === '舉重') { openPick(e.date); render(); }
+  if (e.item === '舉重') { openPick(e.date, e.id); render(); }
 }
 
 /* ---------- 事件 ---------- */
@@ -652,7 +670,9 @@ document.addEventListener('click', ev => {
   switch (a) {
     case 'tab': if (v === 'kb' && UI.tab !== 'kb') UI.kbSel = null; UI.tab = v; UI.undo = null; window.scrollTo(0, 0); break;
     case 'undo': if (UI.undo) { const ids = UI.undo.ids || [UI.undo.id]; DB.workouts = DB.workouts.filter(w => !ids.includes(w.id)); UI.undo = null; save(); } break;
-    case 'pickOpen': openPick(v); window.scrollTo(0, 0); break;
+    case 'pickOpen': openPick(v, b.dataset.sid || null); window.scrollTo(0, 0); break;
+    case 'toggleDel': UI.delOpen = UI.delOpen === v ? null : v; break;
+    case 'delSes': { const kids = DB.workouts.filter(w => w.sid === v); if (!confirm(kids.length ? '刪除這筆舉重和下面 ' + kids.length + ' 個動作？' : '刪除這筆紀錄？')) return; DB.workouts = DB.workouts.filter(w => w.id !== v && w.sid !== v); save(); break; }
     case 'pickSave': pickSave(); break;
     case 'pickCancel': UI.pick = null; break;
     case 'toggleRaw': UI.showRaw = !UI.showRaw; break;
@@ -678,7 +698,7 @@ document.addEventListener('click', ev => {
       const m = num(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
       if (recentDup(w => w.type === 'cardio' && w.date === t && w.item === UI.cardio)) { alert('剛剛已經記過' + UI.cardio + '，不重複記錄'); return; }
       const e = { id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' };
-      UI.cardioMin = null; UI.cardioHr = ''; addEntry(e, cardioText(e)); if (e.item === '舉重') openPick(t); break;
+      UI.cardioMin = null; UI.cardioHr = ''; addEntry(e, cardioText(e)); if (e.item === '舉重') openPick(t, e.id); break;
     }
     case 'toggleExtra': UI.showExtra = !UI.showExtra; break;
     case 'openEx': UI.open[b.dataset.ex] = !UI.open[b.dataset.ex]; break;
