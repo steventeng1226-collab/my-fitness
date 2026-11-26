@@ -84,7 +84,7 @@ svg.trend{width:100%;height:150px}
 </nav>
 <script>
 'use strict';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const KEY_CLD_NAME = 'cloudinary_name';
 const KEY_CLD_PRESET = 'cloudinary_preset';
 const KB_CARDIO = ['飛輪', '跑步機', '橢圓機', '走路'];
@@ -187,6 +187,12 @@ function normalize(d) {
   d.meta = d.meta || { updatedAt: 0 };
   ['workouts', 'monthly', 'diet', 'dietLog', 'notes'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   if (!d.kb || typeof d.kb !== 'object' || Array.isArray(d.kb)) d.kb = {};
+  const seen = new Set();
+  d.workouts = d.workouts.filter(w => {
+    if (w.type !== 'cardio' || !w.start) return true;
+    const k = w.date + '|' + w.start + '|' + w.item;
+    if (seen.has(k)) return false; seen.add(k); return true;
+  });
   return d;
 }
 function load() { try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
@@ -238,7 +244,7 @@ function proteinTotal() {
 }
 
 /* ---------- 介面狀態 ---------- */
-const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', kbSel: null, kbMsg: '', scan: null, scanMsg: '', showRaw: false, undo: null, tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
+const UI = { tab: 'today', loc: localStorage.getItem(KEY_LOC) || 'room', showExtra: false, open: {}, cardio: null, cardioMin: null, cardioHr: '', kbSel: null, kbMsg: '', pick: null, scan: null, scanMsg: '', showRaw: false, undo: null, tmp: {}, calY: null, calM: null, selDay: null, selEx: 'press', editSec: null, syncMsg: '' };
 { const t = new Date(); UI.calY = t.getFullYear(); UI.calM = t.getMonth(); UI.selDay = today(); }
 
 function tmpFor(ex) {
@@ -290,7 +296,7 @@ function vToday() {
     str = '<div class="card"><h2>重訓</h2><div class="muted">這個地點沒有重訓器材。</div></div>';
   }
   const undo = UI.undo ? '<div class="card" style="border:2px solid #0F6E56"><div class="row" style="justify-content:space-between"><div>已記錄 ✓ ' + esc(UI.undo.text) + '</div><button class="btn sm warn" data-act="undo">復原</button></div></div>' : '';
-  return banner + undo + locs + cardio + str;
+  return banner + undo + pickCard() + locs + cardio + str;
 }
 
 function exRow(ex) {
@@ -343,7 +349,7 @@ function vRecords() {
   const es = entriesOn(UI.selDay);
   const day = '<div class="card"><h2>' + fmtDate(UI.selDay) + (isLit(UI.selDay) ? '　✓ 有亮' : '') + '</h2>' +
     (es.length ? es.map(e => '<div class="list-item"><div>' + (e.type === 'cardio' ? (e.item === '舉重' ? '舉重｜' : '有氧｜') + esc(cardioText(e)) : esc(EX[e.ex] ? EX[e.ex].name : e.ex) + '｜' + esc(fmtStr(e)) + (e.feel ? '，' + FEEL[e.feel] : '') + (e.pain ? '，<span class="bad">不適：' + esc(e.pain) + '</span>' : '')) +
-      (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
+      (e.hist ? '　<span class="muted">（歷史）</span>' : '') + (e.note ? '<div class="muted">' + esc(e.note) + '</div>' : '') + '</div><div class="row" style="flex-direction:column;gap:4px">' + (e.type === 'cardio' && e.item === '舉重' ? '<button class="btn sm" data-act="pickOpen" data-v="' + e.date + '">補記動作</button>' : '') + '<button class="btn sm warn" data-act="delW" data-v="' + e.id + '">刪除</button></div></div>').join('') : '<div class="muted">這天沒有紀錄。</div>') + '</div>';
 
   const exIds = Object.keys(EX).filter(k => exRecords(k).length);
   if (!exIds.includes(UI.selEx) && exIds.length) UI.selEx = exIds[0];
@@ -355,7 +361,7 @@ function vRecords() {
       '<tr><th>上次</th><td>' + (lastE ? esc(fmtStr(lastE)) + '（' + lastE.date + '）' : '—') + '</td></tr>' +
       '<tr><th>今天</th><td>' + (todayE.length ? todayE.map(r => esc(fmtStr(r))).join('、') : '—') + '</td></tr></table>' + trend(recs) + '</div>';
   }
-  return cal + day + exCard;
+  return pickCard() + cal + day + exCard;
 }
 
 function trend(recs) {
@@ -527,7 +533,7 @@ function scanPanel() {
     '<div class="row" style="margin-top:6px">' + f('item', '項目') + f('date', '日期', 'date') + f('start', '開始時間') + '</div>' +
     '<div class="row" style="margin-top:6px">' + f('min', '分鐘', 'number') + f('hr', '平均心跳', 'number') + f('maxHr', '最高心跳', 'number') + f('kcal', '大卡', 'number') + '</div>' +
     (s.missing && s.missing.length ? '<div class="hint">截圖上找不到：' + esc(s.missing.join('、')) + '（可以手動補，或多選一張有這些數字的截圖重讀）</div>' : '') +
-    (s.dup ? '<div class="hint">這筆好像已經記過了（同一天、同一開始時間），確定還要再記一次嗎？</div>' : '') +
+    (s.dup ? '<div class="hint">這筆已經記過了（同一天、同一開始時間），不會重複寫入。</div>' : '') +
     '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="scanSave">寫入紀錄</button><button class="btn" data-act="scanCancel">取消</button><button class="btn sm" data-act="toggleRaw">' + (UI.showRaw ? '隱藏原始回覆' : '顯示原始回覆') + '</button></div>' +
     (UI.showRaw ? '<pre style="white-space:pre-wrap;word-break:break-all;font-size:13px;background:#F2F4F3;padding:8px;border-radius:8px">' + esc(s.rawText || '') + '</pre>' : '') + '</div>';
 }
@@ -558,17 +564,26 @@ async function scanImage(fileList) {
     for (const f of files) imgs.push(await toJpegB64(f));
     const prompt = '以下 ' + files.length + ' 張是 Samsung Health 同一次運動紀錄的截圖（可能是同一頁捲動後的不同段落）。請把所有截圖的資訊合併成一筆，只回傳一個 JSON 物件（不要陣列），欄位：exercise（運動名稱原文，如「室內單車」「舉重」）、date（YYYY-MM-DD）、start（開始時間 HH:MM）、duration（總計持續時間原文，如 15:18 或 1:02:30）、avg_hr（平均心跳率數字）、max_hr（最高心跳率數字）、kcal（健身熱量數字）。所有截圖都讀不到的欄位填 null，不要猜。';
     const parts = [{ text: prompt }].concat(imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } })));
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
-    const cand = (j.candidates || [])[0] || {};
-    txt = ((cand.content || {}).parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
-    if (!txt) throw new Error('Gemini 沒有回傳內容' + (cand.finishReason ? '（' + cand.finishReason + '）' : ''));
-    let d = JSON.parse(txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim());
-    if (Array.isArray(d)) d = d.reduce((a, o) => { Object.keys(o || {}).forEach(k => { if (a[k] == null && o[k] != null) a[k] = o[k]; }); return a; }, {});
+    let d = null, lastErr = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (attempt > 1) { UI.scanMsg = '讀取不完整，自動重試第 ' + (attempt - 1) + ' 次…'; render(); }
+      try {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', temperature: 0 } })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+        const cand = (j.candidates || [])[0] || {};
+        txt = ((cand.content || {}).parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+        if (!txt) throw new Error('Gemini 沒有回傳內容' + (cand.finishReason ? '（' + cand.finishReason + '）' : ''));
+        let o = JSON.parse(txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim());
+        if (Array.isArray(o)) o = o.reduce((a, x) => { Object.keys(x || {}).forEach(k => { if (a[k] == null && x[k] != null) a[k] = x[k]; }); return a; }, {});
+        if (o.exercise == null && o.duration == null && o.avg_hr == null) throw new Error('沒有讀到運動項目、時間和心跳');
+        d = o; break;
+      } catch (err) { lastErr = err; }
+    }
+    if (!d) throw lastErr || new Error('讀取失敗');
     const sec = durSec(d.duration);
     const date = /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : today();
     const start = d.start || '';
@@ -581,15 +596,52 @@ async function scanImage(fileList) {
   render();
 }
 function recentDup(pred) { const now = Date.now(); return DB.workouts.find(w => w.ts && now - w.ts < DUP_MS && pred(w)); }
-function addEntry(e, text) { e.ts = Date.now(); DB.workouts.push(e); UI.undo = { id: e.id, text }; save(); }
+function addEntry(e, text) { e.ts = Date.now(); DB.workouts.push(e); UI.undo = { ids: [e.id], text }; save(); }
+const PICK_EX = DEF.room.concat(EXTRA.room);
+function openPick(date) {
+  const items = {};
+  PICK_EX.forEach(ex => { const tp = tmpFor(ex); items[ex] = { on: false, w: EX[ex].kind === 'bw' ? null : tp.w, reps: tp.reps, sets: tp.sets || 1 }; });
+  UI.pick = { date, items };
+}
+function pickCard() {
+  if (!UI.pick) return '';
+  const P = UI.pick;
+  const done = ex => DB.workouts.some(w => w.type === 'str' && w.date === P.date && w.ex === ex);
+  const rows = PICK_EX.map(ex => {
+    const it = P.items[ex], d = EX[ex], dn = done(ex);
+    const unit = d.kind === 'pin' ? '格' : 'kg';
+    return '<div class="ex" style="padding:6px 0"><label class="row" style="gap:6px"><input type="checkbox" data-pick="' + ex + ':on"' + (it.on ? ' checked' : '') + (dn ? ' disabled' : '') + ' style="width:22px;height:22px"><b>' + esc(d.name) + '</b>' + (dn ? '<span class="done">已記過</span>' : '') + '</label>' +
+      (dn ? '' : '<div class="row" style="margin-top:4px;padding-left:28px">' +
+        (d.kind === 'bw' ? '' : '<input type="number" inputmode="decimal" step="0.5" data-pick="' + ex + ':w" value="' + (it.w == null ? '' : it.w) + '" style="width:64px">' + unit) +
+        '<input type="number" inputmode="numeric" data-pick="' + ex + ':reps" value="' + (it.reps == null ? '' : it.reps) + '" style="width:64px">' + (d.repsLabel === '來回' ? '來回' : '下') +
+        '×<input type="number" inputmode="numeric" data-pick="' + ex + ':sets" value="' + it.sets + '" style="width:52px">組</div>') + '</div>';
+  }).join('');
+  return '<div class="card" style="border:2px solid #0F6E56"><h2>' + P.date.slice(5).replace('-', '/') + ' 舉重：這次做了哪些動作？</h2><div class="muted">勾選做過的動作，數字已帶入上次紀錄，可直接修改。</div>' + rows +
+    '<div class="row" style="margin-top:8px"><button class="btn pri" data-act="pickSave">寫入勾選的動作</button><button class="btn" data-act="pickCancel">跳過</button></div></div>';
+}
+function pickSave() {
+  const P = UI.pick; if (!P) return;
+  const ids = [], names = [];
+  PICK_EX.forEach(ex => {
+    const it = P.items[ex], d = EX[ex];
+    if (!it.on || DB.workouts.some(w => w.type === 'str' && w.date === P.date && w.ex === ex)) return;
+    const w = d.kind === 'bw' ? null : num(it.w);
+    const e = { id: uid(), ts: Date.now(), date: P.date, type: 'str', ex, w, wl: d.kind === 'pin' ? '格' : (w == null ? '' : 'kg'), reps: num(it.reps), sets: num(it.sets) || 1, feel: '', pain: '', loc: 'room', hist: false, note: '舉重時記錄' };
+    DB.workouts.push(e); ids.push(e.id); names.push(d.name);
+    if (P.date === today()) UI.tmp[ex] = null;
+  });
+  if (!ids.length) { alert('還沒有勾選動作'); return; }
+  UI.pick = null; UI.undo = { ids, text: '記了 ' + ids.length + ' 個動作：' + names.join('、') }; save();
+}
 function scanSave() {
   const s = UI.scan; if (!s) return;
   const m = num(s.min); if (!m || m <= 0) { alert('請確認分鐘數'); return; }
   const loc = s.item === '橢圓機' ? 'company' : 'room';
-  if (s.dup && !confirm('這筆好像已經記過了，確定再記一次？')) return;
+  if (s.dup || (s.start && DB.workouts.some(w => w.type === 'cardio' && w.date === (s.date || today()) && w.start === s.start))) { UI.scan = null; UI.showRaw = false; UI.scanMsg = '這筆已經記過（' + (s.date || today()) + ' ' + s.start + ' 開始），沒有重複記錄'; render(); return; }
   const e = { id: uid(), date: s.date || today(), type: 'cardio', item: s.item || '其他', min: m, sec: num(s.sec), start: s.start || '', hr: num(s.hr), maxHr: num(s.maxHr), kcal: num(s.kcal), loc, hist: false, note: '' };
   UI.scan = null; UI.showRaw = false; UI.scanMsg = '';
   addEntry(e, (e.date !== today() ? e.date + ' ' : '') + cardioText(e));
+  if (e.item === '舉重') { openPick(e.date); render(); }
 }
 
 /* ---------- 事件 ---------- */
@@ -599,7 +651,10 @@ document.addEventListener('click', ev => {
   const t = today();
   switch (a) {
     case 'tab': if (v === 'kb' && UI.tab !== 'kb') UI.kbSel = null; UI.tab = v; UI.undo = null; window.scrollTo(0, 0); break;
-    case 'undo': if (UI.undo) { DB.workouts = DB.workouts.filter(w => w.id !== UI.undo.id); UI.undo = null; save(); } break;
+    case 'undo': if (UI.undo) { const ids = UI.undo.ids || [UI.undo.id]; DB.workouts = DB.workouts.filter(w => !ids.includes(w.id)); UI.undo = null; save(); } break;
+    case 'pickOpen': openPick(v); window.scrollTo(0, 0); break;
+    case 'pickSave': pickSave(); break;
+    case 'pickCancel': UI.pick = null; break;
     case 'toggleRaw': UI.showRaw = !UI.showRaw; break;
     case 'kbOpen': UI.tab = 'kb'; UI.kbSel = v; UI.kbMsg = ''; UI.undo = null; window.scrollTo(0, 0); break;
     case 'kbBack': UI.kbSel = null; break;
@@ -621,9 +676,9 @@ document.addEventListener('click', ev => {
     case 'saveAi': { localStorage.setItem(KEY_GKEY, document.querySelector('[data-in="gKey"]').value.trim()); localStorage.setItem(KEY_GMODEL, document.querySelector('[data-in="gModel"]').value.trim() || DEF_MODEL); UI.syncMsg = 'Gemini 設定已儲存'; break; }
     case 'saveCardio': {
       const m = num(UI.cardioMin == null ? defMin(UI.cardio) : UI.cardioMin); if (!m || m <= 0) { alert('請輸入分鐘數'); return; }
-      if (recentDup(w => w.type === 'cardio' && w.date === t && w.item === UI.cardio) && !confirm('剛剛已經記過' + UI.cardio + '，確定再記一筆？')) return;
+      if (recentDup(w => w.type === 'cardio' && w.date === t && w.item === UI.cardio)) { alert('剛剛已經記過' + UI.cardio + '，不重複記錄'); return; }
       const e = { id: uid(), date: t, type: 'cardio', item: UI.cardio, min: m, hr: num(UI.cardioHr), loc: UI.loc, hist: false, note: '' };
-      UI.cardioMin = null; UI.cardioHr = ''; addEntry(e, cardioText(e)); break;
+      UI.cardioMin = null; UI.cardioHr = ''; addEntry(e, cardioText(e)); if (e.item === '舉重') openPick(t); break;
     }
     case 'toggleExtra': UI.showExtra = !UI.showExtra; break;
     case 'openEx': UI.open[b.dataset.ex] = !UI.open[b.dataset.ex]; break;
@@ -635,7 +690,7 @@ document.addEventListener('click', ev => {
     }
     case 'saveStr': {
       const ex = b.dataset.ex, tp = tmpFor(ex), d = EX[ex];
-      if (recentDup(w => w.type === 'str' && w.date === t && w.ex === ex) && !confirm('剛剛已經記過' + d.name + '，確定再記一筆？')) return;
+      if (recentDup(w => w.type === 'str' && w.date === t && w.ex === ex)) { alert('剛剛已經記過' + d.name + '，不重複記錄'); return; }
       const e = { id: uid(), date: t, type: 'str', ex, w: d.kind === 'bw' ? null : tp.w, wl: d.kind === 'pin' ? '格' : (d.kind === 'bw' || tp.w == null ? '' : 'kg'), reps: tp.reps, sets: tp.sets, feel: tp.feel, pain: tp.pain, loc: UI.loc, hist: false, note: '' };
       tp.feel = ''; tp.pain = ''; UI.open[ex] = false; addEntry(e, d.name + ' ' + fmtStr(e)); break;
     }
@@ -669,11 +724,13 @@ document.addEventListener('input', ev => {
   if (el.dataset.in === 'cardioMin') UI.cardioMin = el.value;
   if (el.dataset.in === 'cardioHr') UI.cardioHr = el.value;
   if (el.dataset.scan && UI.scan) UI.scan[el.dataset.scan] = el.value;
+  if (el.dataset.pick && UI.pick) { const q = el.dataset.pick.split(':'); if (q[1] !== 'on') UI.pick.items[q[0]][q[1]] = el.value; }
 });
 document.addEventListener('change', ev => {
   const el = ev.target;
   if (el.dataset.in === 'selEx') { UI.selEx = el.value; render(); }
   if (el.dataset.in === 'importFile' && el.files[0]) importJson(el.files[0]);
+  if (el.dataset.pick && UI.pick) { const q = el.dataset.pick.split(':'); if (q[1] === 'on') UI.pick.items[q[0]].on = el.checked; }
   if (el.dataset.in === 'kbImg' && el.files[0]) { const f = el.files[0]; el.value = ''; kbUpload(f); }
   if (el.dataset.in === 'scanFile' && el.files.length) { const fl = Array.from(el.files); el.value = ''; scanImage(fl); }
 
